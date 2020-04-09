@@ -1,0 +1,31 @@
+{
+  "type": "array",
+  "items": {
+    "type": "object",
+    "oneOf": [
+      {
+        "type": "object",
+        "required": ["id"],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "app_push": {
+            "type": "boolean"
+          },
+          "email": {
+            "type": "boolean"
+          },
+          "sms": {
+            "type": "boolean"
+          },
+          "web_push": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      }
+    ]
+  },
+  "minItems": 1
+}

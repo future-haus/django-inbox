@@ -1,0 +1,32 @@
+[
+  {
+    "fields": {
+      "first_name": "Test 1",
+      "is_staff": true,
+      "is_active": true,
+      "is_superuser": true,
+      "last_name": "User 1",
+      "last_login": "2015-09-09T22:13:12.726Z",
+      "password": "md5$0RZ4r2jiEw4H$9cb61953cf456b388eb8786757df27b4",
+      "email": "testuser+1@pre.haus",
+      "username": "testuser1"
+    },
+    "model": "auth.user",
+    "pk": 1
+  },
+  {
+    "fields": {
+      "first_name": "Test 2",
+      "is_staff": true,
+      "is_active": true,
+      "is_superuser": true,
+      "last_name": "User 2",
+      "last_login": "2015-09-09T22:13:12.726Z",
+      "password": "md5$0RZ4r2jiEw4H$9cb61953cf456b388eb8786757df27b4",
+      "email": "testuser+2@pre.haus",
+      "username": "testuser2"
+    },
+    "model": "auth.user",
+    "pk": 2
+  }
+]

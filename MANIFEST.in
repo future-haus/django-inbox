@@ -1,0 +1,2 @@
+include README.md
+include inbox/message_preference_groups.schema.json
