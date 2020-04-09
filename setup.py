@@ -34,7 +34,7 @@ EXTRAS = {
 
 TESTS_REQUIRE = [
     'coverage', 'Faker', 'django-annoying', 'responses', 'djangorestframework-simplejwt', 'hashids==1.2.0',
-    'freezegun'
+    'freezegun', 'twine'
 ]
 
 # The rest you shouldn't have to touch too much :)
@@ -87,7 +87,7 @@ class UploadCommand(Command):
             pass
 
         self.status('Building Source and Wheel (universal) distribution…')
-        os.system('{0} setup.py sdist bdist_wheel --universal'.format(sys.executable))
+        os.system('python setup.py sdist bdist_wheel')
 
         self.status('Uploading the package to PyPI via Twine…')
         os.system('twine upload -r pypicloud dist/*')
