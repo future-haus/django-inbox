@@ -15,7 +15,7 @@ from inbox.core import app_push
 from inbox.models import Message, MessageLog
 from inbox.utils import process_new_messages
 from tests.models import DeviceGroup
-from tests.schema import message_preferences
+from tests.schema import message_preferences, messages
 from tests.test import TestCase
 
 User = get_user_model()
@@ -93,6 +93,7 @@ class DeviceGroupTests(TestCase):
         # Verify there's an update_account message in Inbox and in model directly
         response = self.get(f'/api/v1/users/{user_id}/messages')
         self.assertHTTP200(response)
+        self.validate_list(response, messages)
         self.assertTrue(len(response.data['results']), 1)
         self.assertFalse(response.data['results'][0]['is_read'])
 

@@ -99,8 +99,15 @@ Setup Postgres database to run tests.
     ALTER ROLE inbox SET timezone TO 'UTC';
     ALTER USER inbox CREATEDB;
     GRANT ALL PRIVILEGES ON DATABASE inbox TO inbox;
-    
-    
+
+Build and Upload
+================
+
+Make sure you have twine in your system Python. Bump the version number in setup.py, major, minor, patch (semver). Commit
+to repo and then run:
+
+`python setup.py sdist bdist_wheel upload`
+
 TODO
 ====
 

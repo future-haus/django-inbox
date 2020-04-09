@@ -33,3 +33,29 @@ message_preferences = {
     },
     'additionalProperties': False
 }
+
+message = {
+    'type': 'object',
+    'required': ['id',],
+    'properties': {
+        'id': {'type': 'string'},
+        'subject': {'type': 'string'},
+        'body': {'type': 'string'},
+        'data': {'type': ['null', 'object']},
+        'group': {'type': 'string'},
+        'is_read': {'type': 'boolean'},
+        'created_at': {'type': 'string'}
+    },
+    'additionalProperties': False
+}
+
+messages = {
+    "type": [
+        "array"
+    ],
+    "items": {
+        "type": "object",
+        "oneOf": [message]
+    },
+    "minItems": 0
+}
