@@ -108,43 +108,7 @@ to repo and then run:
 
 `python setup.py sdist bdist_wheel upload`
 
-TODO
-====
+TODOs
+=====
 
-* [x] Move `message_preferences` action endpoint from the test suite Users view to a mixin that can be used by projects
-  using this library easily.
-* [ ] Remove inbox/permissions.py and setup/use django-common module.
-* [ ] Remove JSON Schema field and setup/use django-common module.
-* [ ] Add ability to update individual group message pref medium so that UIs that have auto-save can more easily use
-   the APIs and not deal with race conditions due to network/server latency. Endpoint example: 
-   `/api/v1/users/{userId}/message_preferences/{groupKey}/{medium}`
-* [ ] Manage User subs to Topic (probably automatically based off Message Groups with an `is_topic` boolean, if they
-  turn off push for that Message Group then they would unsubscribe that Topic)
-* [ ] Define sensible defaults on each item in the config for message groups so that it can be shortened up in many 
-  cases, also consider moving this portion to the database? Need to discover pros/cons of move to DB for these.
-* [ ] Background sending as tasks in Google Cloud Tasks, this would probably just need to be custom backends for
-  each one we want backgroundable, email, push, etc?
-* [ ] Allow subject template to be consolidated by leaving off `_{medium}` on the filename and it will be used as the 
-  fallback for any medium not specified. Body being separate will be required because it's also used to determine
-  the medium(s) to send to, skipping any that are missing.
-* [ ] Specify a message as a bundleable message, which will delay its send for a bit so that it can be bundled with
-  similar messages if they come in within a specified time window. Requirements:
-  * [ ] Specify a message as bundleable when it's created
-  * [ ] Specify some sort of grouping identifier to know what other messages it can be bundled 
-  with (eg `bundleable_group_id`) when the message is created.
-  * [ ] Configure time windows for bundleable groups in Django settings, but still allow immediate sending if needed.
-  * [ ] Configure template to use for each medium for a bundleable group.
-* [x] Add a `message_id` if we need to handle message de-duplication.
-* [ ] Handle case where a message key is duplicated
-* [ ] Priority level for sending (cron would grab messages with higher priority first, probably some bottom limit still
-  based on time created.)
-* [ ] Handle sending to a Topic and not just a `User`
-* [ ] Provide Django *TestCase mixin that will handle emptying app push outbox between each test run.
-* [ ] Add ability to fail silently in production when performing Message create, possibly a shortcut wrapper that wraps
-   it up so that direct model creation behaves like a normal django model
-* [ ] Build support for message preferences for multi-tenant structures where you may have global preferences plus per
-   tenant preferences. Initial thought for approaching this problem would be a settings value where you can define a
-   method that receives the User and/or Message Preferences object and appends any multi-tenant specific preferences...
-   when we do this we'll need to probably allow for groups of groups in the preferences structure, possibly by just
-   using dot-notation on keh naming so that it's backwards compatible? Not sure yet on this.
-* [ ] Build out support for SMS and Web Push, currently those can be configured even though they don't do anything.
+https://3.basecamp.com/4413376/projects/16662219

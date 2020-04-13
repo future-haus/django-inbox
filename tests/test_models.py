@@ -85,10 +85,10 @@ class MessageTestCase(TestCase):
 
         for k, message_log in enumerate(message_logs):
             if k == 0:
-                self.assertEqual(message_log.medium, MessageMedium.APP_PUSH)
+                self.assertEqual(message_log.medium, MessageMedium.EMAIL)
                 self.assertEqual(message.pk, message_log.message_id)
             if k == 1:
-                self.assertEqual(message_log.medium, MessageMedium.EMAIL)
+                self.assertEqual(message_log.medium, MessageMedium.APP_PUSH)
                 self.assertEqual(message.pk, message_log.message_id)
 
     def test_create_message_process_message_logs(self):

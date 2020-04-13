@@ -11,23 +11,20 @@ from shutil import rmtree
 
 from setuptools import find_packages, setup, Command
 
-# Package meta-data.
 NAME = 'django-inbox'
 DESCRIPTION = 'A Django app to support user inbox messages.'
 URL = 'http://www.futurehaus.com/'
 EMAIL = 'jt@futurehaus.com'
 AUTHOR = 'Josh Turmel'
 REQUIRES_PYTHON = '>=3.7'
-VERSION = '0.1.1'
+VERSION = '0.1.2'
 
-# What packages are required for this module to be executed?
 REQUIRED = [
     'django', 'django-annoying', 'django_enumfield', 'djangorestframework', 'jsonschema', 'drf-extensions', 'toolz',
 
     'psycopg2-binary==2.7.6.1',
 ]
 
-# What packages are optional?
 EXTRAS = {
     'app_push_firebase': ['firebase-admin']
 }
@@ -98,8 +95,6 @@ class UploadCommand(Command):
 
         sys.exit()
 
-
-# Where the magic happens:
 setup(
     name=NAME,
     version=about['__version__'],
