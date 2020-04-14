@@ -10,7 +10,8 @@ from inbox.constants import MessageLogStatus
 from inbox.core import app_push
 
 from inbox.models import Message, get_message_group_default, MessageMedium, MessageLog
-from inbox.utils import process_new_messages, AppPushTestCaseMixin
+from inbox.test.utils import AppPushTestCaseMixin
+from inbox.utils import process_new_messages
 
 User = get_user_model()
 fake = Faker()

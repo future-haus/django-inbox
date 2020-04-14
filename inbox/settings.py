@@ -5,7 +5,6 @@ from django.conf import settings
 
 # Fill is used for filling in some fields with sensible defaults
 from toolz import merge
-
 MESSAGE_GROUP_FILL = {
     'is_preference': True,
     'use_preference': None,
@@ -32,8 +31,9 @@ CONFIG_DEFAULTS = {
     # if one doesn't exist for the user.
     'APP_PUSH_NOTIFICATION_KEY_GETTER': None,
     'BACKENDS': {
-        'APP_PUSH': 'inbox.core.app_push.backends.firebase.FirebaseBackend'
-    }
+        'APP_PUSH': 'inbox.core.app_push.backends.locmem.AppPushBackend'
+    },
+    'TESTING_MEDIUM_OUTPUT_PATH': None
 }
 
 

@@ -114,7 +114,8 @@ INBOX_CONFIG = {
     'APP_PUSH_NOTIFICATION_KEY_GETTER': 'tests.models.get_notification_key',
     'BACKENDS': {
         'APP_PUSH': 'inbox.core.app_push.backends.locmem.AppPushBackend'
-    }
+    },
+    'TESTING_MEDIUM_OUTPUT_PATH': None
 }
 
 GOOGLE_FCM_SENDER_ID = '12345'

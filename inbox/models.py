@@ -4,6 +4,7 @@ import os
 import uuid
 
 from annoying.fields import AutoOneToOneField
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.fields import JSONField
 from django.core import exceptions
@@ -22,6 +23,7 @@ from inbox import settings as inbox_settings
 from inbox.constants import MessageMedium, MessageLogStatus, MessageLogFailureReason
 from inbox.core.app_push.message import AppPushMessage
 from inbox.signals import message_preferences_changed, unread_count
+from inbox.test.utils import dump_template
 
 User = get_user_model()
 
@@ -255,7 +257,7 @@ class MessageLog(models.Model):
         subject = self._build_subject()
         body = self._build_body()
 
-        AppPushMessage(self.message.user, subject, body).send()
+        AppPushMessage(self.message.user, subject, body, data=self.message.data).send()
 
     def send_email(self):
         subject = self._build_subject()
@@ -274,7 +276,12 @@ class MessageLog(models.Model):
         template_name = f'inbox/{self.message.key}/subject_{self.medium.name.lower()}.txt'
         template = loader.get_template(template_name)
         context = self._get_context_for_template()
-        return template.render(context)
+        subject = template.render(context)
+
+        if settings.INBOX_CONFIG['TESTING_MEDIUM_OUTPUT_PATH']:
+            dump_template(template_name, subject)
+
+        return subject
 
     def _build_body(self):
         body_file_exts = {
@@ -284,7 +291,12 @@ class MessageLog(models.Model):
         template_name = f'inbox/{self.message.key}/body_{self.medium.name.lower()}.{body_file_exts.get(self.medium)}'
         template = loader.get_template(template_name)
         context = self._get_context_for_template()
-        return template.render(context)
+        body = template.render(context)
+
+        if settings.INBOX_CONFIG['TESTING_MEDIUM_OUTPUT_PATH']:
+            dump_template(template_name, body)
+
+        return body
 
 
 # TODO Move to own django lib

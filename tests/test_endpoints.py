@@ -5,8 +5,8 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core import mail
 from django.utils import timezone
-import responses
 from freezegun import freeze_time
+import responses
 
 from inbox import settings as inbox_settings
 from inbox import signals

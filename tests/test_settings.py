@@ -1,3 +1,4 @@
+import os
 from unittest.mock import MagicMock
 
 from django.conf import settings
@@ -13,6 +14,7 @@ from inbox.core import app_push
 from inbox import settings as inbox_settings
 from inbox.models import Message, get_message_group_default, MessageMedium, MessageLog
 from inbox.utils import process_new_messages
+from tests.settings import BASE_DIR
 
 User = get_user_model()
 fake = Faker()
@@ -44,8 +46,9 @@ class SettingsTestCase(TestCase):
             # if one doesn't exist for the user.
             'APP_PUSH_NOTIFICATION_KEY_GETTER': None,
             'BACKENDS': {
-                'APP_PUSH': 'inbox.core.app_push.backends.firebase.FirebaseBackend'
-            }
+                'APP_PUSH': 'inbox.core.app_push.backends.locmem.AppPushBackend'
+            },
+            'TESTING_MEDIUM_OUTPUT_PATH': None
         }
 
         with self.settings(INBOX_CONFIG={}):
@@ -118,7 +121,8 @@ class SettingsTestCase(TestCase):
             'APP_PUSH_NOTIFICATION_KEY_GETTER': 'tests.models.get_notification_key',
             'BACKENDS': {
                 'APP_PUSH': 'inbox.core.app_push.backends.locmem.AppPushBackend'
-            }
+            },
+            'TESTING_MEDIUM_OUTPUT_PATH': None
         }
 
         inbox_settings.get_config.cache_clear()

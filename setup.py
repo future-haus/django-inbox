@@ -17,7 +17,7 @@ URL = 'http://www.futurehaus.com/'
 EMAIL = 'jt@futurehaus.com'
 AUTHOR = 'Josh Turmel'
 REQUIRES_PYTHON = '>=3.7'
-VERSION = '0.1.5'
+VERSION = '0.1.6'
 
 REQUIRED = [
     'django>=2.2', 'django-annoying', 'django_enumfield>=2.0.0', 'djangorestframework', 'jsonschema', 'drf-extensions',
@@ -104,7 +104,7 @@ setup(
     author_email=EMAIL,
     python_requires=REQUIRES_PYTHON,
     url=URL,
-    packages=find_packages(exclude=["tests", "*.tests", "*.tests.*", "tests.*"]),
+    packages=find_packages(exclude=["tests", "*.tests", "*.tests.*", "tests.*"], include=["inbox.test", "inbox.test.*"]),
     # If your package is a single module, use this instead of 'packages':
     # py_modules=['mypackage'],
 

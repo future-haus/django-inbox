@@ -2,7 +2,6 @@ from django.db import transaction
 from django.utils import timezone
 
 from inbox.constants import MessageLogStatus
-from inbox.core import app_push
 from inbox.models import MessageLog
 
 
@@ -24,12 +23,3 @@ def process_new_messages():
             message_log.save()
 
 
-class AppPushTestCaseMixin:
-
-    def setUp(self):
-        app_push.outbox = []
-        super().setUp()
-
-    def tearDown(self):
-        app_push.outbox = []
-        super().tearDown()
