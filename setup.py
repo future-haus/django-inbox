@@ -17,12 +17,11 @@ URL = 'http://www.futurehaus.com/'
 EMAIL = 'jt@futurehaus.com'
 AUTHOR = 'Josh Turmel'
 REQUIRES_PYTHON = '>=3.7'
-VERSION = '0.1.4'
+VERSION = '0.1.5'
 
 REQUIRED = [
-    'django', 'django-annoying', 'django_enumfield', 'djangorestframework', 'jsonschema', 'drf-extensions', 'toolz',
-
-    'psycopg2-binary==2.7.6.1',
+    'django>=2.2', 'django-annoying', 'django_enumfield>=2.0.0', 'djangorestframework', 'jsonschema', 'drf-extensions',
+    'toolz', 'psycopg2-binary',
 ]
 
 EXTRAS = {

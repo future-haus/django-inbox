@@ -73,15 +73,15 @@ a message key is not present in any `MESSAGE_GROUP` config an error will be rais
 #### Template Naming Convention
 
 For the subject and body in the inbox:
-* `inbox_{message_key}_subject.txt`
-* `inbox_{message_key}_body.html`
+* `inbox/{message_key}/subject.txt`
+* `inbox/{message_key}/body.html`
 
 For the subject:
-* `inbox_{message_key}_subject_{'app_push'|'email'}.txt`
+* `inbox/{message_key}/subject_{'app_push'|'email'}.txt`
 
 For the body:
-* `inbox_{message_key}_body_{'app_push'}.txt`
-* `inbox_{message_key}_body_{'email'}.html`
+* `inbox/{message_key}/body_{'app_push'}.txt`
+* `inbox/{message_key}/body_{'email'}.html`
 
 Templates also determine what mediums are sent to, if a template doesn't exist for a medium, that medium won't be used.
 Each template receives the following data: user, link, data that were used when creating the `Message`
