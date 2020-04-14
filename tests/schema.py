@@ -27,9 +27,9 @@ groups = {
 
 message_preferences = {
     'type': 'object',
-    'required': ['groups'],
+    'required': ['results'],
     'properties': {
-        'groups': groups
+        'results': groups
     },
     'additionalProperties': False
 }

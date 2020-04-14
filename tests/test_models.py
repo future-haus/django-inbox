@@ -83,13 +83,12 @@ class MessageTestCase(TestCase):
 
         message_logs = MessageLog.objects.filter(message=message)
 
+        used = []
         for k, message_log in enumerate(message_logs):
-            if k == 0:
-                self.assertEqual(message_log.medium, MessageMedium.EMAIL)
-                self.assertEqual(message.pk, message_log.message_id)
-            if k == 1:
-                self.assertEqual(message_log.medium, MessageMedium.APP_PUSH)
-                self.assertEqual(message.pk, message_log.message_id)
+            # Tested this way because order can change
+            self.assertTrue(message_log.medium in (MessageMedium.EMAIL, MessageMedium.APP_PUSH) and message_log.medium not in used)
+            self.assertEqual(message.pk, message_log.message_id)
+            used.append(message_log.medium)
 
     def test_create_message_process_message_logs(self):
 

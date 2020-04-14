@@ -1,28 +1,66 @@
 from django.utils import timezone
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.mixins import RetrieveModelMixin, DestroyModelMixin, ListModelMixin
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 from rest_framework_extensions.mixins import NestedViewSetMixin
 
-from inbox.models import Message
+from inbox.constants import MessageMedium
+from inbox.models import Message, MessagePreferences, get_default_preference_ids
 from inbox.permissions import IsOwner
 from inbox.serializers import MessageSerializer, MessageListSerializer
 
 
 class NestedMessagePreferencesMixin:
 
-    @action(methods=['GET', 'PUT'], detail=True, permission_classes=[IsAuthenticated, IsOwner])
-    def message_preferences(self, request, pk=None, *args, **kwargs):
+    @action(methods=['GET', 'PUT'], detail=True,
+            url_path='message_preferences(?:/(?P<preference_id>[a-z_]+)/(?P<medium_id>[a-z_]+))?',
+            permission_classes=[IsAuthenticated, IsOwner])
+    def message_preferences(self, request, pk=None, preference_id=None, medium_id=None, **kwargs):
+        """
+        Mixin for UserViewSet
+
+        Supports updating all preferences at once, eg PUT /api/v1/users/{userId}/message_preferences
+        Supports updating a single preference+medium combo, eg PUT /api/v1/users/{userId}/message_preferences/{preferenceId}/{medium}
+
+        :param request:
+        :param pk:
+        :param args:
+        :param kwargs:
+        :return:
+        """
         message_preferences = self.get_object().message_preferences
 
+        is_single = False
         if self.request.method == 'PUT':
-            message_preferences.groups = self.request.data['groups']
+            if preference_id and preference_id not in get_default_preference_ids():
+                raise ValidationError(
+                    {'preference_id': [f'The preference_id ({preference_id}) specified in the path is invalid.']}
+                )
+            if medium_id and MessageMedium.get(medium_id.upper()) is None:
+                raise ValidationError(
+                    {'medium_id': [f'The medium_id ({medium_id}) specified in the path is invalid.']}
+                )
+            if preference_id and medium_id:
+                is_single = True
+
+                message_preferences = MessagePreferences.objects.select_for_update().get(pk=message_preferences.pk)
+                for k, group in enumerate(message_preferences._groups):
+                    if group['id'] == preference_id:
+                        message_preferences._groups[k][medium_id] = self.request.data
+                        break
+            elif self.request.data.get('results'):
+                message_preferences.groups = self.request.data['results']
+
             message_preferences.save()
 
-        return Response({'groups': message_preferences.groups}, status=status.HTTP_200_OK)
+        if is_single:
+            return Response(self.request.data, status=status.HTTP_200_OK)
+        else:
+            return Response({'results': message_preferences.groups}, status=status.HTTP_200_OK)
 
 
 class MessageViewSet(NestedViewSetMixin, RetrieveModelMixin, ListModelMixin, DestroyModelMixin, GenericViewSet):

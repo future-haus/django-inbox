@@ -176,23 +176,23 @@ class DeviceGroupTests(TestCase):
         # Update default message preference
         response = self._get_message_preferences(user.pk)
         self.validate(response.data, message_preferences)
-        response.data['groups'][0]['app_push'] = False
+        response.data['results'][0]['app_push'] = False
         response = self.client.put(f'/api/v1/users/{user.pk}/message_preferences', response.data)
         self.assertHTTP200(response)
-        self.assertFalse(response.data['groups'][0]['app_push'])
-        self.assertTrue(response.data['groups'][0]['email'])
-        self.assertTrue(response.data['groups'][1]['app_push'])
+        self.assertFalse(response.data['results'][0]['app_push'])
+        self.assertTrue(response.data['results'][0]['email'])
+        self.assertTrue(response.data['results'][1]['app_push'])
 
         # Case 2
         # Update default message preference with mediums that don't exist, shouldn't error, but also not get stored
-        response.data['groups'][0]['app_push'] = False
-        response.data['groups'][0]['tester'] = False
+        response.data['results'][0]['app_push'] = False
+        response.data['results'][0]['tester'] = False
         response = self.client.put(f'/api/v1/users/{user.pk}/message_preferences', response.data)
         self.assertHTTP200(response)
-        self.assertFalse(response.data['groups'][0]['app_push'])
-        self.assertTrue(response.data['groups'][0]['email'])
-        self.assertTrue(response.data['groups'][1]['app_push'])
-        self.assertFalse('tester' in response.data['groups'][0])
+        self.assertFalse(response.data['results'][0]['app_push'])
+        self.assertTrue(response.data['results'][0]['email'])
+        self.assertTrue(response.data['results'][1]['app_push'])
+        self.assertFalse('tester' in response.data['results'][0])
 
         # Case 3
         # Make sure it's actually in the DB that way
@@ -200,14 +200,14 @@ class DeviceGroupTests(TestCase):
         self.assertFalse('tester' in res_user.message_preferences.groups[0])
 
         # Add preference that isn't valid (eg no id in defaults)
-        response.data['groups'].append({
+        response.data['results'].append({
             'id': 'fake',
             'app_push': True
         })
         response = self.client.put(f'/api/v1/users/{user.pk}/message_preferences', response.data)
         self.assertHTTP200(response)
 
-        for group in response.data['groups']:
+        for group in response.data['results']:
             self.assertNotEqual(group['id'], 'fake')
         res_user = User.objects.get(pk=user.pk)
         for group in res_user.message_preferences._groups:
@@ -216,13 +216,13 @@ class DeviceGroupTests(TestCase):
         # Case 4
         # Reverse order before saving and make sure comes back in the correct order (as defined by defaults)
         response = self.client.get(f'/api/v1/users/{user.pk}/message_preferences')
-        response.data['groups'].reverse()
+        response.data['results'].reverse()
         response = self.client.put(f'/api/v1/users/{user.pk}/message_preferences', response.data)
         self.assertHTTP200(response)
-        self.assertEqual(response.data['groups'][0]['id'], 'default')
-        self.assertEqual(response.data['groups'][1]['id'], 'account_updated')
-        self.assertEqual(response.data['groups'][2]['id'], 'friend_requests')
-        self.assertEqual(response.data['groups'][3]['id'], 'important_updates')
+        self.assertEqual(response.data['results'][0]['id'], 'default')
+        self.assertEqual(response.data['results'][1]['id'], 'account_updated')
+        self.assertEqual(response.data['results'][2]['id'], 'friend_requests')
+        self.assertEqual(response.data['results'][3]['id'], 'important_updates')
 
         # We use lru_cache on INBOX_CONFIG, clear it out
         inbox_settings.get_config.cache_clear()
@@ -246,9 +246,9 @@ class DeviceGroupTests(TestCase):
         INBOX_CONFIG['MESSAGE_GROUPS'] = MESSAGE_GROUPS
         with self.settings(INBOX_CONFIG=INBOX_CONFIG):
             response = self._get_message_preferences(user.pk)
-            self.assertEqual(response.data['groups'][4]['id'], 'test_1')
-            self.assertTrue(response.data['groups'][4]['app_push'])
-            self.assertTrue(response.data['groups'][4]['email'])
+            self.assertEqual(response.data['results'][4]['id'], 'test_1')
+            self.assertTrue(response.data['results'][4]['app_push'])
+            self.assertTrue(response.data['results'][4]['email'])
 
         # Then override the INBOX_CONFIG setting, we'll add a new message group to the front
         #  and see it we get the expected return
@@ -270,12 +270,12 @@ class DeviceGroupTests(TestCase):
         INBOX_CONFIG['MESSAGE_GROUPS'] = MESSAGE_GROUPS
         with self.settings(INBOX_CONFIG=INBOX_CONFIG):
             response = self._get_message_preferences(user.pk)
-            self.assertEqual(response.data['groups'][0]['id'], 'test_2')
-            self.assertTrue(response.data['groups'][0]['app_push'])
-            self.assertFalse(response.data['groups'][0]['email'])
-            self.assertEqual(response.data['groups'][5]['id'], 'test_1')
-            self.assertTrue(response.data['groups'][5]['app_push'])
-            self.assertTrue(response.data['groups'][5]['email'])
+            self.assertEqual(response.data['results'][0]['id'], 'test_2')
+            self.assertTrue(response.data['results'][0]['app_push'])
+            self.assertFalse(response.data['results'][0]['email'])
+            self.assertEqual(response.data['results'][5]['id'], 'test_1')
+            self.assertTrue(response.data['results'][5]['app_push'])
+            self.assertTrue(response.data['results'][5]['email'])
 
         # Verify it wasn't saved to user, since user didn't save/update it
         user.refresh_from_db()
@@ -296,10 +296,10 @@ class DeviceGroupTests(TestCase):
         INBOX_CONFIG['MESSAGE_GROUPS'] = [INBOX_CONFIG['MESSAGE_GROUPS'][0]]
         with self.settings(INBOX_CONFIG=INBOX_CONFIG):
             response = self.client.get(f'/api/v1/users/{user.pk}/message_preferences')
-            self.assertEqual(response.data['groups'][0]['id'], 'test_2')
-            self.assertTrue(response.data['groups'][0]['app_push'])
-            self.assertFalse(response.data['groups'][0]['email'])
-            self.assertTrue(len(response.data['groups']), 1)
+            self.assertEqual(response.data['results'][0]['id'], 'test_2')
+            self.assertTrue(response.data['results'][0]['app_push'])
+            self.assertFalse(response.data['results'][0]['email'])
+            self.assertTrue(len(response.data['results']), 1)
 
         # Verify it wasn't saved to user, since user didn't save/update it
         user.refresh_from_db()
@@ -319,18 +319,18 @@ class DeviceGroupTests(TestCase):
             #  though they won't be returned in the API
             response = self.client.put(f'/api/v1/users/{user.pk}/message_preferences', response.data)
             self.assertHTTP200(response)
-            self.assertEqual(response.data['groups'][0]['id'], 'test_2')
-            self.assertTrue(response.data['groups'][0]['app_push'])
-            self.assertFalse(response.data['groups'][0]['email'])
-            self.assertEqual(len(response.data['groups']), 1)
+            self.assertEqual(response.data['results'][0]['id'], 'test_2')
+            self.assertTrue(response.data['results'][0]['app_push'])
+            self.assertFalse(response.data['results'][0]['email'])
+            self.assertEqual(len(response.data['results']), 1)
 
             # Fetch it, verify the fetch is correct as well
             response = self.client.get(f'/api/v1/users/{user.pk}/message_preferences')
             self.assertHTTP200(response)
-            self.assertEqual(response.data['groups'][0]['id'], 'test_2')
-            self.assertTrue(response.data['groups'][0]['app_push'])
-            self.assertFalse(response.data['groups'][0]['email'])
-            self.assertEqual(len(response.data['groups']), 1)
+            self.assertEqual(response.data['results'][0]['id'], 'test_2')
+            self.assertTrue(response.data['results'][0]['app_push'])
+            self.assertFalse(response.data['results'][0]['email'])
+            self.assertEqual(len(response.data['results']), 1)
 
         # Verify it was saved to user
         user.refresh_from_db()
@@ -344,3 +344,30 @@ class DeviceGroupTests(TestCase):
 
         for group in user.message_preferences._groups:
             self.assertNotEqual(group['id'], 'test_1')
+
+    def test_message_preference_medium(self):
+        user_id = 1
+        user = User.objects.get(pk=user_id)
+        self.client.force_login(user)
+
+        # Case 1
+        # Update default message preference
+        response = self._get_message_preferences(user.pk)
+        self.validate(response.data, message_preferences)
+        message_preference = response.data['results'][0]
+        response = self.client.put(f'/api/v1/users/{user.pk}/message_preferences/{message_preference["id"]}/app_push',
+                                   False)
+        self.assertHTTP200(response)
+        self.assertFalse(response.data)
+        response = self.client.put(f'/api/v1/users/{user.pk}/message_preferences/{message_preference["id"]}/app_push',
+                                   True)
+        self.assertHTTP200(response)
+        self.assertTrue(response.data)
+
+        response = self.client.put(f'/api/v1/users/{user.pk}/message_preferences/{message_preference["id"]}/fake',
+                                   True)
+        self.assertHTTP400(response)
+
+        response = self.client.put(f'/api/v1/users/{user.pk}/message_preferences/fake/app_push',
+                                   True)
+        self.assertHTTP400(response)
