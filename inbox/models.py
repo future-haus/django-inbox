@@ -88,13 +88,14 @@ class Message(models.Model):
     key = models.CharField(max_length=255, db_index=True)
     subject = models.TextField(blank=True, db_index=True, null=True)
     body = models.TextField(blank=True, db_index=True, null=True)
-    link = models.URLField(blank=True, null=True)
     data = JSONField(blank=True, db_index=True, null=True,
                      help_text='Arbitrary data that can be used by consuming '
                                ' clients/signal listeners as needed (eg needing'
                                ' extra data to pass with Gmail emails for actions,'
                                ' extra data for push notifications for interactive'
                                ' notifications.')
+    data_email = JSONField(blank=True, db_index=True, null=True,
+                           help_text='Arbitrary data that is included with data when creating email templates.')
     message_id = models.CharField(db_index=True, max_length=255, default=default_message_id,
                                   help_text='Explicitly specifying a message id enables message de-duplication '
                                             'per user.')
@@ -199,8 +200,8 @@ class Message(models.Model):
     def _get_context_for_template(self):
         return {
             'user': self.user,
-            'link': self.link,
-            'data': self.data
+            'data': self.data,
+            'data_email': self.data_email
         }
 
     def _send_unread_count(self):
@@ -268,8 +269,8 @@ class MessageLog(models.Model):
     def _get_context_for_template(self):
         return {
             'user': self.message.user,
-            'link': self.message.link,
-            'data': self.message.data
+            'data': self.message.data,
+            'data_email': self.message.data_email
         }
 
     def _build_subject(self):
