@@ -17,7 +17,7 @@ URL = 'http://www.futurehaus.com/'
 EMAIL = 'jt@futurehaus.com'
 AUTHOR = 'Josh Turmel'
 REQUIRES_PYTHON = '>=3.7'
-VERSION = '0.1.3'
+VERSION = '0.1.4'
 
 REQUIRED = [
     'django', 'django-annoying', 'django_enumfield', 'djangorestframework', 'jsonschema', 'drf-extensions', 'toolz',

@@ -10,17 +10,18 @@ from inbox.constants import MessageLogStatus
 from inbox.core import app_push
 
 from inbox.models import Message, get_message_group_default, MessageMedium, MessageLog
-from inbox.utils import process_new_messages
+from inbox.utils import process_new_messages, AppPushTestCaseMixin
 
 User = get_user_model()
 fake = Faker()
 
 
-class MessageTestCase(TestCase):
+class MessageTestCase(AppPushTestCaseMixin, TestCase):
 
     user = None
 
     def setUp(self):
+        super().setUp()
         self.user = User.objects.create(email=fake.ascii_email)
 
     def test_can_save_message(self):
@@ -92,9 +93,6 @@ class MessageTestCase(TestCase):
 
     def test_create_message_process_message_logs(self):
 
-        # TODO Django's test runner manages resetting mail.outbox, our app push one needs a custom TestCase so that
-        #  we can do the same, until then manually handle it
-        app_push.outbox = []
         self.assertEqual(MessageLog.objects.count(), 0)
 
         Message.objects.create(user=self.user, key='default')

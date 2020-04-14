@@ -156,9 +156,6 @@ class DeviceGroupTests(TestCase):
             self.assertEqual(len(app_push.outbox), 1)
             self.assertEqual(len(mail.outbox), 1)
 
-            app_push.outbox = []
-            mail.outbox = []
-
     def test_message_preferences_from_different_user(self):
         user_id = 1
         user = User.objects.get(pk=user_id)
