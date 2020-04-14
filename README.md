@@ -22,6 +22,7 @@ Quick start
 3. Configure INBOX_CONFIG in your Django settings file, example:
 
 
+
     INBOX_CONFIG = {
         # Message groups are used to organize the messages and provide preferences and their defaults
         'MESSAGE_GROUPS': [
@@ -47,11 +48,14 @@ Quick start
         'TESTING_MEDIUM_OUTPUT_PATH': None  # Only set this in the testing environment, it will write final outputs for mediums being sent to.
     }
 
+
 Setting a `preference_default` medium to `None` disables it from being returned in the API or used as an option. Setting 
 it to `False` means you want the UI to present it as "off" by default.
 
 You can leave off `is_preference`, `use_preference`, and `preference_defaults` if you're good with the above defaults. 
 The above example could look like this and get the same result:
+
+
 
     INBOX_CONFIG = {
         # Message groups are used to organize the messages and provide preferences and their defaults
