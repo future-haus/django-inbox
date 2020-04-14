@@ -113,6 +113,22 @@ For the body:
 Templates also determine what mediums are sent to, if a template doesn't exist for a medium, that medium won't be used.
 Each template receives the following data: user, link, data that were used when creating the `Message`
 
+#### Endpoints/Views
+
+There are some views provided for easy implementation of the library without building your own, just add them to your routing config in urls.py.
+
+* `GET /api/v1/users/{userId}/messages` - Get paginated list of messages for a user, most recent first
+* `POST /api/v1/users/{userId}/messages/read` - Mark all messages as read
+
+Example:
+
+    urls.py
+    
+    router = ExtendedSimpleRouter(trailing_slash=False)
+    users_router = router.register(r'users', UserViewSet)
+    users_router.register(r'messages', MessageViewSet, basename='users_messages', parents_query_lookups=['user'])
+    
+
 Test
 ====
 
