@@ -243,9 +243,9 @@ class DeviceGroupTests(TestCase):
         INBOX_CONFIG['MESSAGE_GROUPS'] = MESSAGE_GROUPS
         with self.settings(INBOX_CONFIG=INBOX_CONFIG):
             response = self._get_message_preferences(user.pk)
-            self.assertEqual(response.data['results'][4]['id'], 'test_1')
-            self.assertTrue(response.data['results'][4]['app_push'])
-            self.assertTrue(response.data['results'][4]['email'])
+            self.assertEqual(response.data['results'][5]['id'], 'test_1')
+            self.assertTrue(response.data['results'][5]['app_push'])
+            self.assertTrue(response.data['results'][5]['email'])
 
         # Then override the INBOX_CONFIG setting, we'll add a new message group to the front
         #  and see it we get the expected return
@@ -270,9 +270,9 @@ class DeviceGroupTests(TestCase):
             self.assertEqual(response.data['results'][0]['id'], 'test_2')
             self.assertTrue(response.data['results'][0]['app_push'])
             self.assertFalse(response.data['results'][0]['email'])
-            self.assertEqual(response.data['results'][5]['id'], 'test_1')
-            self.assertTrue(response.data['results'][5]['app_push'])
-            self.assertTrue(response.data['results'][5]['email'])
+            self.assertEqual(response.data['results'][6]['id'], 'test_1')
+            self.assertTrue(response.data['results'][6]['app_push'])
+            self.assertTrue(response.data['results'][6]['email'])
 
         # Verify it wasn't saved to user, since user didn't save/update it
         user.refresh_from_db()

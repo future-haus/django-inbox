@@ -109,6 +109,16 @@ INBOX_CONFIG = {
                 'email': True
             },
             'message_keys': ['important_update']
+        },
+        {
+            'id': 'push_only_group',
+            'label': 'Push only group',
+            'description': "Receive notifications about push only.",
+            'preference_defaults': {
+                'app_push': True,
+                'email': None
+            },
+            'message_keys': ['push_only']
         }
     ],
     'APP_PUSH_NOTIFICATION_KEY_GETTER': 'tests.models.get_notification_key',

@@ -118,15 +118,23 @@ class MessageTestCase(AppPushTestCaseMixin, TestCase):
         message = Message.objects.create(user=self.user, key='default')
 
         # Verify two message log entries
-        self.assertTrue(len(message.messagelog_set.all()), 2)
+        self.assertTrue(len(message.logs.all()), 2)
 
         process_new_messages()
 
         self.assertEqual(len(app_push.outbox), 0)
         self.assertEqual(len(mail.outbox), 1)
 
-        for message_log in message.messagelog_set.all():
+        for message_log in message.logs.all():
             if message_log.medium == MessageMedium.APP_PUSH:
                 self.assertTrue(message_log.status, MessageLogStatus.SKIPPED_FOR_PREF)
             if message_log.medium == MessageMedium.EMAIL:
                 self.assertTrue(message_log.status, MessageLogStatus.SENT)
+
+    def test_verify_app_push_template_falls_back(self):
+
+        self.assertEqual(MessageLog.objects.count(), 0)
+
+        Message.objects.create(user=self.user, key='push_only')
+
+        process_new_messages()

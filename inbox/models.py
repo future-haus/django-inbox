@@ -183,6 +183,13 @@ class Message(models.Model):
         except TemplateDoesNotExist:
             pass
 
+        if not self.base_body_template:
+            template_name = f'inbox/{self.key}/body.txt'
+            try:
+                self.base_body_template = loader.get_template(template_name)
+            except TemplateDoesNotExist:
+                pass
+
         return self.base_subject_template, self.base_body_template
 
     def _build_subject(self):
@@ -192,8 +199,13 @@ class Message(models.Model):
         return template.render(context)
 
     def _build_body(self):
-        template_name = f'inbox/{self.key}/body.html'
-        template = loader.get_template(template_name)
+        try:
+            template_name = f'inbox/{self.key}/body.html'
+            template = loader.get_template(template_name)
+        except TemplateDoesNotExist:
+            template_name = f'inbox/{self.key}/body.txt'
+            template = loader.get_template(template_name)
+
         context = self._get_context_for_template()
         return template.render(context)
 
@@ -229,7 +241,7 @@ class MessageLog(models.Model):
             models.Index(fields=['-send_at', 'status']),
         ]
 
-    message = models.ForeignKey(Message, on_delete=models.CASCADE)
+    message = models.ForeignKey(Message, on_delete=models.CASCADE, related_name='logs')
     medium = enum.EnumField(MessageMedium)
     send_at = models.DateTimeField(db_index=True)  # This is from the parent Message
     status = enum.EnumField(MessageLogStatus, default=MessageLogStatus.NEW)
@@ -274,8 +286,18 @@ class MessageLog(models.Model):
         }
 
     def _build_subject(self):
-        template_name = f'inbox/{self.message.key}/subject_{self.medium.name.lower()}.txt'
-        template = loader.get_template(template_name)
+        template = None
+
+        try:
+            template_name = f'inbox/{self.message.key}/subject_{self.medium.name.lower()}.txt'
+            template = loader.get_template(template_name)
+        except TemplateDoesNotExist:
+            pass
+
+        if not template and self.medium == MessageMedium.APP_PUSH:
+            template_name = f'inbox/{self.message.key}/subject.txt'
+            template = loader.get_template(template_name)
+
         context = self._get_context_for_template()
         subject = template.render(context)
 
@@ -285,12 +307,22 @@ class MessageLog(models.Model):
         return subject
 
     def _build_body(self):
+        template = None
         body_file_exts = {
             MessageMedium.APP_PUSH: 'txt',
             MessageMedium.EMAIL: 'html'
         }
-        template_name = f'inbox/{self.message.key}/body_{self.medium.name.lower()}.{body_file_exts.get(self.medium)}'
-        template = loader.get_template(template_name)
+
+        try:
+            template_name = f'inbox/{self.message.key}/body_{self.medium.name.lower()}.{body_file_exts.get(self.medium)}'
+            template = loader.get_template(template_name)
+        except TemplateDoesNotExist:
+            pass
+
+        if not template and self.medium == MessageMedium.APP_PUSH:
+            template_name = f'inbox/{self.message.key}/body.txt'
+            template = loader.get_template(template_name)
+
         context = self._get_context_for_template()
         body = template.render(context)
 

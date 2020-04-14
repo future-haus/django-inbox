@@ -116,6 +116,20 @@ class SettingsTestCase(TestCase):
                         'web_push': None
                     },
                     'message_keys': ['important_update']
+                },
+                {
+                    'id': 'push_only_group',
+                    'label': 'Push only group',
+                    'description': "Receive notifications about push only.",
+                    'is_preference': True,
+                    'use_preference': None,
+                    'preference_defaults': {
+                        'app_push': True,
+                        'email': None,
+                        'sms': None,
+                        'web_push': None
+                    },
+                    'message_keys': ['push_only']
                 }
             ],
             'APP_PUSH_NOTIFICATION_KEY_GETTER': 'tests.models.get_notification_key',
