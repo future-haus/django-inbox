@@ -21,33 +21,32 @@ Quick start
 
 3. Configure INBOX_CONFIG in your Django settings file, example:
 
-
-
-    INBOX_CONFIG = {
-        # Message groups are used to organize the messages and provide preferences and their defaults
-        'MESSAGE_GROUPS': [
-            {
-                'id': 'default',
-                'label': 'News and Updates',
-                'description': 'General news and updates.',  # Can be used in clients to describe what this preference is for
-                'is_preference': True,  # Whether this is just used for grouping purposes (False) or also as a preference (True)
-                'use_preference': None,  # If is_preference is False, this defines which group to use as preference
-                'preference_defaults': {  # True/False or if you don't want that preference set to None
-                    'app_push': True,
-                    'email': True,
-                    'sms': None,
-                    'web_push': None
-                },
-                'message_keys': []  # List of message keys that fall into this group
-            }
-        ],
-        'APP_PUSH_NOTIFICATION_KEY_GETTER': None,  # Point to a method that gets the user and needs to return the notification key if sending push
-        'BACKENDS': {
-            'APP_PUSH': 'inbox.core.app_push.backends.firebase.AppPushBackend'
-        },
-        'TESTING_MEDIUM_OUTPUT_PATH': None  # Only set this in the testing environment, it will write final outputs for mediums being sent to.
-    }
-
+```python
+INBOX_CONFIG = {
+    # Message groups are used to organize the messages and provide preferences and their defaults
+    'MESSAGE_GROUPS': [
+        {
+            'id': 'default',
+            'label': 'News and Updates',
+            'description': 'General news and updates.',  # Can be used in clients to describe what this preference is for
+            'is_preference': True,  # Whether this is just used for grouping purposes (False) or also as a preference (True)
+            'use_preference': None,  # If is_preference is False, this defines which group to use as preference
+            'preference_defaults': {  # True/False or if you don't want that preference set to None
+                'app_push': True,
+                'email': True,
+                'sms': None,
+                'web_push': None
+            },
+            'message_keys': []  # List of message keys that fall into this group
+        }
+    ],
+    'APP_PUSH_NOTIFICATION_KEY_GETTER': None,  # Point to a method that gets the user and needs to return the notification key if sending push
+    'BACKENDS': {
+        'APP_PUSH': 'inbox.core.app_push.backends.firebase.AppPushBackend'
+    },
+    'TESTING_MEDIUM_OUTPUT_PATH': None  # Only set this in the testing environment, it will write final outputs for mediums being sent to.
+}
+```
 
 Setting a `preference_default` medium to `None` disables it from being returned in the API or used as an option. Setting 
 it to `False` means you want the UI to present it as "off" by default.
@@ -55,21 +54,21 @@ it to `False` means you want the UI to present it as "off" by default.
 You can leave off `is_preference`, `use_preference`, and `preference_defaults` if you're good with the above defaults. 
 The above example could look like this and get the same result:
 
+```python
+INBOX_CONFIG = {
+    # Message groups are used to organize the messages and provide preferences and their defaults
+    'MESSAGE_GROUPS': [
+        {
+            'id': 'default',
+            'label': 'News and Updates',
+            'description': 'General news and updates.',  # Can be used in clients to describe what this preference is for
+            'message_keys': []  # List of message keys that fall into this group
+        }
+    ],
+}
+```
 
-
-    INBOX_CONFIG = {
-        # Message groups are used to organize the messages and provide preferences and their defaults
-        'MESSAGE_GROUPS': [
-            {
-                'id': 'default',
-                'label': 'News and Updates',
-                'description': 'General news and updates.',  # Can be used in clients to describe what this preference is for
-                'message_keys': []  # List of message keys that fall into this group
-            }
-        ],
-    }
-
-4. Run `python manage.py migrate` to create the polls models.
+4. Run `python manage.py migrate` to create the inbox models.
 
 Concepts
 ========
@@ -100,18 +99,22 @@ a message key is not present in any `MESSAGE_GROUP` config an error will be rais
 #### Template Naming Convention
 
 For the subject and body in the inbox:
+
 * `inbox/{message_key}/subject.txt`
 * `inbox/{message_key}/body.html`
 
 For the subject:
+
 * `inbox/{message_key}/subject_{'app_push'|'email'}.txt`
 
 For the body:
+
 * `inbox/{message_key}/body_{'app_push'}.txt`
 * `inbox/{message_key}/body_{'email'}.html`
 
 Templates also determine what mediums are sent to, if a template doesn't exist for a medium, that medium won't be used.
-Each template receives the following data: user, link, data that were used when creating the `Message`
+Each template receives the following context: `user`, `data` (email and inbox also receive `data_email`) that were 
+used when creating the `Message`.
 
 #### Endpoints/Views
 
