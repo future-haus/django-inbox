@@ -1,4 +1,3 @@
-from time import sleep
 from unittest.mock import MagicMock
 
 from django.conf import settings
@@ -15,7 +14,7 @@ from inbox.core import app_push
 from inbox.models import Message, MessageLog
 from inbox.utils import process_new_messages
 from tests.models import DeviceGroup
-from tests.schema import message_preferences, messages
+from tests.schema import message_preferences, messages, message
 from tests.test import TestCase
 
 User = get_user_model()
@@ -88,8 +87,6 @@ class DeviceGroupTests(TestCase):
         response = self.patch(f'/api/v1/users/{user_id}', {'first_name': 'Test'})
         self.assertHTTP200(response)
 
-        sleep(1)
-
         # Verify there's an update_account message in Inbox and in model directly
         response = self.get(f'/api/v1/users/{user_id}/messages')
         self.assertHTTP200(response)
@@ -106,14 +103,14 @@ class DeviceGroupTests(TestCase):
             self.assertHTTP200(response)
             self.assertTrue(len(response.data['results']), 2)
 
-            self.assertEqual(response.data['results'][0]['id'], '2')
+            self.assertTrue(int(response.data['results'][0]['id']) > int(response.data['results'][1]['id']))
+
             self.assertFalse(response.data['results'][0]['is_read'])
             self.assertEqual(response.data['results'][0]['subject'], 'Account Updated Subject')
             self.assertEqual(response.data['results'][0]['body'], 'Account updated body.')
             self.assertEqual(response.data['results'][0]['group'], 'account_updated')
             self.assertIsNone(response.data['results'][0]['data'])
 
-            self.assertEqual(response.data['results'][1]['id'], '1')
             self.assertFalse(response.data['results'][1]['is_read'])
             self.assertEqual(response.data['results'][1]['subject'], 'Account Updated Subject')
             self.assertEqual(response.data['results'][1]['body'], 'Account updated body.')
@@ -368,3 +365,86 @@ class DeviceGroupTests(TestCase):
         response = self.client.put(f'/api/v1/users/{user.pk}/message_preferences/fake/app_push',
                                    True)
         self.assertHTTP400(response)
+
+    def test_get_messages_by_non_owner(self):
+        user_id = 1
+        user = User.objects.get(pk=user_id)
+        self.client.force_login(user)
+
+        response = self.get(f'/api/v1/users/2/messages')
+        self.assertHTTP403(response)
+
+    def test_get_message_for_user(self):
+        user_id = 1
+        user = User.objects.get(pk=user_id)
+        self.client.force_login(user)
+
+        # Update user, this triggers message in our test app
+        response = self.patch(f'/api/v1/users/{user_id}', {'first_name': 'Test'})
+        self.assertHTTP200(response)
+
+        # Verify there's an update_account message in Inbox and in model directly
+        response = self.get(f'/api/v1/users/{user_id}/messages')
+        message_id = response.data['results'][0]['id']
+        self.assertHTTP200(response)
+        self.validate_list(response, messages)
+        self.assertTrue(len(response.data['results']), 1)
+
+        # Get individual message
+        response = self.get(f'/api/v1/messages/{message_id}')
+        self.assertHTTP200(response)
+        self.validate(response.data, message)
+
+        # Logout and try to grab it
+        self.client.logout()
+        response = self.get(f'/api/v1/messages/{message_id}')
+        self.assertHTTP401(response)
+
+        # Login as different user and try to pull
+        user = User.objects.get(pk=2)
+        self.client.force_login(user)
+        response = self.get(f'/api/v1/messages/{message_id}')
+        self.assertHTTP403(response)
+
+        # Mark as read
+        self.client.logout()
+        user = User.objects.get(pk=user_id)
+        self.client.force_login(user)
+        response = self.put(f'/api/v1/messages/{message_id}', {'is_read': True})
+        self.assertHTTP200(response)
+        self.validate(response.data, message)
+        self.assertTrue(response.data['is_read'])
+
+        # Mark as unread
+        response = self.put(f'/api/v1/messages/{message_id}', {'is_read': False})
+        self.assertHTTP200(response)
+        self.validate(response.data, message)
+        self.assertFalse(response.data['is_read'])
+
+    def test_delete_message(self):
+        user_id = 1
+        user = User.objects.get(pk=user_id)
+        self.client.force_login(user)
+
+        # Update user, this triggers message in our test app
+        response = self.patch(f'/api/v1/users/{user_id}', {'first_name': 'Test'})
+        self.assertHTTP200(response)
+
+        # Verify there's an update_account message in Inbox and in model directly
+        response = self.get(f'/api/v1/users/{user_id}/messages')
+        message_id = response.data['results'][0]['id']
+        self.assertHTTP200(response)
+        self.validate_list(response, messages)
+        self.assertTrue(len(response.data['results']), 1)
+
+        # Delete message, make sure it doesn't come back in list
+        response = self.delete(f'/api/v1/messages/{message_id}')
+        self.assertHTTP204(response)
+
+        # Verify at the model level that it has a deleted time
+        message = Message.objects.get(pk=message_id)
+        self.assertIsNotNone(message.deleted_at)
+
+        response = self.get(f'/api/v1/users/{user_id}/messages')
+        self.assertHTTP200(response)
+        self.assertEqual(len(response.data['results']), 0)

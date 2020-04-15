@@ -38,3 +38,12 @@ class MessageSerializer(MessageListSerializer):
     class Meta:
         model = MessageListSerializer.Meta.model
         fields = MessageListSerializer.Meta.fields + []
+
+
+class MessageUpdateSerializer(serializers.ModelSerializer):
+
+    is_read = serializers.BooleanField(required=True)
+
+    class Meta:
+        model = Message
+        fields = ['is_read']

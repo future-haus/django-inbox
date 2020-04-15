@@ -115,6 +115,13 @@ class Message(models.Model):
     def is_read(self):
         return bool(self.read_at)
 
+    @is_read.setter
+    def is_read(self, value: bool):
+        if not value:
+            self.read_at = None
+        elif not self.read_at:
+            self.read_at = timezone.now()
+
     def clean(self):
         # TODO Verify message key exists in a message group
 

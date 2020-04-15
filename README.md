@@ -118,15 +118,19 @@ Each template receives the following data: user, link, data that were used when 
 There are some views provided for easy implementation of the library without building your own, just add them to your routing config in urls.py.
 
 * `GET /api/v1/users/{userId}/messages` - Get paginated list of messages for a user, most recent first
-* `POST /api/v1/users/{userId}/messages/read` - Mark all messages as read
+* `POST /api/v1/users/{userId}/messages/read` - Mark all messages as read for a user
+* `GET /api/v1/messages/{messageId}` - Get message
+* `PUT /api/v1/messages/{messageId}` - Update message, used to set `is_read` to `true` or `false`
+* `DELETE /api/v1/messages/{messageId}` - Delete a message, no longer returned in list call.
 
-Example:
+Example routing setup:
 
     urls.py
     
     router = ExtendedSimpleRouter(trailing_slash=False)
     users_router = router.register(r'users', UserViewSet)
     users_router.register(r'messages', MessageViewSet, basename='users_messages', parents_query_lookups=['user'])
+    messages_router = router.register(r'messages', MessageViewSet, basename='messages')
     
 
 Test
