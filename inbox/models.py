@@ -292,49 +292,67 @@ class MessageLog(models.Model):
             'data_email': self.message.data_email
         }
 
+    @staticmethod
+    def _get_subject_template_names(key: str, medium: MessageMedium):
+        template_names = []
+        if medium == MessageMedium.EMAIL:
+            template_names.append(
+                f'inbox/{key}/subject_{medium.name.lower()}.txt'
+            )
+
+        if medium == MessageMedium.APP_PUSH:
+            template_names.extend([
+                f'inbox/{key}/subject.html',
+                f'inbox/{key}/subject.txt'
+            ])
+
+        return template_names
+
     def _build_subject(self):
-        template = None
-
         try:
-            template_name = f'inbox/{self.message.key}/subject_{self.medium.name.lower()}.txt'
-            template = loader.get_template(template_name)
+            template = loader.select_template(self._get_subject_template_names(self.message.key, self.medium))
         except TemplateDoesNotExist:
-            pass
-
-        if not template and self.medium == MessageMedium.APP_PUSH:
-            template_name = f'inbox/{self.message.key}/subject.txt'
-            template = loader.get_template(template_name)
+            raise ValidationError({'key': [f'Subject template for "{self.message.key}/{self.medium.name}" '
+                                           f'does not exist.']})
 
         context = self._get_context_for_template()
         subject = template.render(context)
 
         if settings.INBOX_CONFIG['TESTING_MEDIUM_OUTPUT_PATH']:
-            dump_template(template_name, subject)
+            dump_template(template.template.name, subject)
 
         return subject
 
+    @staticmethod
+    def _get_body_template_names(key: str, medium: MessageMedium):
+        template_names = [
+            f'inbox/{key}/body_{medium.name.lower()}.html'
+        ]
+
+        if medium != MessageMedium.EMAIL:
+            template_names.append(
+                f'inbox/{key}/body_{medium.name.lower()}.txt'
+            )
+
+        if medium == MessageMedium.APP_PUSH:
+            template_names.extend([
+                f'inbox/{key}/body.html',
+                f'inbox/{key}/body.txt'
+            ])
+
+        return template_names
+
     def _build_body(self):
-        template = None
-        body_file_exts = {
-            MessageMedium.APP_PUSH: 'txt',
-            MessageMedium.EMAIL: 'html'
-        }
-
         try:
-            template_name = f'inbox/{self.message.key}/body_{self.medium.name.lower()}.{body_file_exts.get(self.medium)}'
-            template = loader.get_template(template_name)
+            template = loader.select_template(self._get_body_template_names(self.message.key, self.medium))
         except TemplateDoesNotExist:
-            pass
-
-        if not template and self.medium == MessageMedium.APP_PUSH:
-            template_name = f'inbox/{self.message.key}/body.txt'
-            template = loader.get_template(template_name)
+            raise ValidationError({'key': [f'Subject template for "{self.message.key}/{self.medium}" does not exist.']})
 
         context = self._get_context_for_template()
         body = template.render(context)
 
         if settings.INBOX_CONFIG['TESTING_MEDIUM_OUTPUT_PATH']:
-            dump_template(template_name, body)
+            dump_template(template.template.name, body)
 
         return body
 

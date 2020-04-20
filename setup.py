@@ -17,7 +17,7 @@ URL = 'http://www.futurehaus.com/'
 EMAIL = 'jt@futurehaus.com'
 AUTHOR = 'Josh Turmel'
 REQUIRES_PYTHON = '>=3.7'
-VERSION = '0.2.0'
+VERSION = '0.2.1'
 
 REQUIRED = [
     'django>=2.2', 'django-annoying', 'django_enumfield>=2.0.0', 'djangorestframework', 'jsonschema', 'drf-extensions',
@@ -30,7 +30,7 @@ EXTRAS = {
 
 TESTS_REQUIRE = [
     'coverage', 'Faker', 'django-annoying', 'responses', 'djangorestframework-simplejwt', 'hashids==1.2.0',
-    'freezegun', 'twine'
+    'freezegun', 'twine', 'beautifultable'
 ]
 
 # The rest you shouldn't have to touch too much :)
