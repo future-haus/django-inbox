@@ -15,51 +15,40 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
 
+        used_template_names = []
         message_groups = []
         for message_group in inbox_settings.get_config()['MESSAGE_GROUPS']:
+            template_names = MessageLog._get_subject_template_names(message_group['id'], None, True)
+            template_names.extend(MessageLog._get_body_template_names(message_group['id'], None, True))
             for k, v in message_group['preference_defaults'].items():
                 if v is not None:
-                    template_names = MessageLog._get_subject_template_names(message_group['id'], MessageMedium.get(k.upper()))
-                    template_names.extend(MessageLog._get_body_template_names(message_group['id'], MessageMedium.get(k.upper())))
-                    # TODO Add base template to template names
+                    template_names.extend(MessageLog._get_subject_template_names(message_group['id'], MessageMedium.get(k.upper()), True))
+                    template_names.extend(MessageLog._get_body_template_names(message_group['id'], MessageMedium.get(k.upper()), True))
 
-                    for template_name in template_names:
+                    for template_name, required in template_names:
+                        if template_name in used_template_names:
+                            continue
+
+                        used_template_names.append(template_name)
+
                         try:
                             loader.get_template(template_name)
                         except TemplateDoesNotExist:
-                            if MessageMedium.get(k.upper()) == MessageMedium.APP_PUSH:
-                                message_groups.append({
-                                    'file': template_name,
-                                    'key': message_group['id'],
-                                    'medium': k.lower(),
-                                    'required': False,
-                                    'found': False
-                                })
-                            if MessageMedium.get(k.upper()) == MessageMedium.EMAIL:
-                                message_groups.append({
-                                    'file': template_name,
-                                    'key': message_group['id'],
-                                    'medium': k.lower(),
-                                    'required': True,
-                                    'found': False
-                                })
+                            message_groups.append({
+                                'file': template_name,
+                                'key': message_group['id'],
+                                'medium': k.lower(),
+                                'required': required,
+                                'found': False
+                            })
                         else:
-                            if MessageMedium.get(k.upper()) == MessageMedium.APP_PUSH:
-                                message_groups.append({
-                                    'file': template_name,
-                                    'key': message_group['id'],
-                                    'medium': k.lower(),
-                                    'required': False,
-                                    'found': True
-                                })
-                            if MessageMedium.get(k.upper()) == MessageMedium.EMAIL:
-                                message_groups.append({
-                                    'file': template_name,
-                                    'key': message_group['id'],
-                                    'medium': k.lower(),
-                                    'required': True,
-                                    'found': True
-                                })
+                            message_groups.append({
+                                'file': template_name,
+                                'key': message_group['id'],
+                                'medium': k.lower(),
+                                'required': required,
+                                'found': True
+                            })
 
         table = BeautifulTable()
         table.column_headers = ['File', 'Required', 'Found']

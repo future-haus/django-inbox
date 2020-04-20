@@ -3,10 +3,10 @@ from django_enumfield import enum
 
 class MessageMedium(enum.Enum):
 
-    APP_PUSH = 0
-    EMAIL = 1
-    SMS = 2
-    WEB_PUSH = 3
+    APP_PUSH = 1
+    EMAIL = 2
+    SMS = 3
+    WEB_PUSH = 4
 
     __labels__ = {
         APP_PUSH: 'App Push',
@@ -18,11 +18,11 @@ class MessageMedium(enum.Enum):
 
 class MessageLogStatus(enum.Enum):
 
-    NEW = 0
-    QUEUED = 1
-    SENT = 2
-    SKIPPED_FOR_PREF = 3
-    FAILED = 4
+    NEW = 1
+    QUEUED = 2
+    SENT = 3
+    SKIPPED_FOR_PREF = 4
+    FAILED = 5
 
     __labels__ = {
         NEW: 'New',
@@ -35,8 +35,8 @@ class MessageLogStatus(enum.Enum):
 
 class MessageLogFailureReason(enum.Enum):
 
-    MISSING_TEMPLATE = 0
-    INVALID_APP_PUSH_KEY = 1
+    MISSING_TEMPLATE = 1
+    INVALID_APP_PUSH_KEY = 2
 
     __labels__ = {
         MISSING_TEMPLATE: 'Missing template',

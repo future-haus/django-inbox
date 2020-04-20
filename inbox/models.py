@@ -293,18 +293,20 @@ class MessageLog(models.Model):
         }
 
     @staticmethod
-    def _get_subject_template_names(key: str, medium: MessageMedium):
+    def _get_subject_template_names(key: str, medium: MessageMedium = None, debug=False):
         template_names = []
-        if medium == MessageMedium.EMAIL:
-            template_names.append(
-                f'inbox/{key}/subject_{medium.name.lower()}.txt'
-            )
 
-        if medium == MessageMedium.APP_PUSH:
-            template_names.extend([
-                f'inbox/{key}/subject.html',
-                f'inbox/{key}/subject.txt'
-            ])
+        if medium:
+            template_names = [
+                (f'inbox/{key}/subject_{medium.name.lower()}.txt', False)
+            ]
+
+        template_names.append(
+            (f'inbox/{key}/subject.txt', True)
+        )
+
+        if not debug:
+            template_names = [tn[0] for tn in template_names]
 
         return template_names
 
@@ -324,21 +326,28 @@ class MessageLog(models.Model):
         return subject
 
     @staticmethod
-    def _get_body_template_names(key: str, medium: MessageMedium):
-        template_names = [
-            f'inbox/{key}/body_{medium.name.lower()}.html'
-        ]
+    def _get_body_template_names(key: str, medium: MessageMedium = None, debug=False):
+        template_names = []
 
-        if medium != MessageMedium.EMAIL:
-            template_names.append(
-                f'inbox/{key}/body_{medium.name.lower()}.txt'
-            )
-
-        if medium == MessageMedium.APP_PUSH:
+        # Ordering is important here as the loader will use the first one it finds
+        if medium and medium != MessageMedium.EMAIL:
             template_names.extend([
-                f'inbox/{key}/body.html',
-                f'inbox/{key}/body.txt'
+                (f'inbox/{key}/body_{medium.name.lower()}.txt', False),
+                (f'inbox/{key}/body.txt', True)
             ])
+        elif medium == MessageMedium.EMAIL:
+            template_names.append(
+                (f'inbox/{key}/body_{medium.name.lower()}.html', True)
+            )
+        else:
+            # Fallback to generate the body for the Inbox object's body
+            template_names.extend([
+                (f'inbox/{key}/body.html', False),
+                (f'inbox/{key}/body.txt', True)
+            ])
+
+        if not debug:
+            template_names = [tn[0] for tn in template_names]
 
         return template_names
 
