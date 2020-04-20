@@ -53,6 +53,11 @@ class Command(BaseCommand):
         table = BeautifulTable()
         table.column_headers = ['File', 'Required', 'Found']
         table.column_alignments['File'] = BeautifulTable.ALIGN_LEFT
+
+        table_optional = BeautifulTable()
+        table_optional.column_headers = ['File (Optional)', 'Required', 'Found']
+        table_optional.column_alignments['File (Optional)'] = BeautifulTable.ALIGN_LEFT
+
         for mg in message_groups:
             if mg['required'] and not mg['found']:
                 table.append_row([
@@ -67,7 +72,7 @@ class Command(BaseCommand):
                 required_txt = 'Yes'
                 if not mg['required']:
                     required_txt = 'No'
-                table.append_row([mg['file'], required_txt, found_txt])
+                table_optional.append_row([mg['file'], required_txt, found_txt])
             else:
                 found_txt = 'Yes'
                 if not mg['found']:
@@ -76,10 +81,31 @@ class Command(BaseCommand):
                 if not mg['required']:
                     required_txt = 'No'
 
-                table.append_row([
-                    self.style.SUCCESS(mg['file']),
-                    self.style.SUCCESS(required_txt),
-                    self.style.SUCCESS(found_txt)
-                ])
+                if mg['required']:
+                    table.append_row([
+                        self.style.SUCCESS(mg['file']),
+                        self.style.SUCCESS(required_txt),
+                        self.style.SUCCESS(found_txt)
+                    ])
+                else:
+                    table_optional.append_row([
+                        self.style.SUCCESS(mg['file']),
+                        self.style.SUCCESS(required_txt),
+                        self.style.SUCCESS(found_txt)
+                    ])
 
-        self.stdout.write(str(table))
+        final_table = BeautifulTable()
+        final_table.column_headers = ['File', 'Required', 'Found']
+        final_table.column_alignments['File'] = BeautifulTable.ALIGN_LEFT
+
+        for row in table:
+            final_table.append_row(row)
+
+        final_table.append_row([
+            'File (Optional)', 'Required', 'Found'
+        ])
+
+        for row in table_optional:
+            final_table.append_row(row)
+
+        self.stdout.write(str(final_table))
