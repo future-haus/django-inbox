@@ -144,10 +144,11 @@ Message.objects.create(user=user, key='example_message_key')
 ```
 
 Use a message_id if you need to be able to track whether you've sent a message before (eg did we send this user their
-morning reminder to drink coffee on Mon, Aug 8, 2010?)
+morning reminder to drink coffee on Mon, Aug 8, 2010?). A message id is only unique to a user, no need to interpolate
+user_id into the message_id to enforce uniqueness across users.
 
 ```python
-Message.objects.create(user=user, key='morning_coffee_reminder', message_id=f'mcr_{user.pk}_20100808')
+Message.objects.create(user=user, key='morning_coffee_reminder', message_id=f'mcr_20100808')
 ```
 
 Determine whether a message id (or list of a message ids) have Messages.
