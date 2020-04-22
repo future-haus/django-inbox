@@ -2,6 +2,7 @@ import inspect
 import json
 import os
 import uuid
+from typing import List, Union, Tuple, Set
 
 from annoying.fields import AutoOneToOneField
 from django.conf import settings
@@ -38,6 +39,21 @@ class MessageQuerySet(models.QuerySet):
 
 
 class MessageManager(BaseManager.from_queryset(MessageQuerySet)):
+
+    def exists(self, message_ids: Union[Set[str], List[str], str]) -> Tuple[Set[str], Set[str]]:
+        """
+        Pass it a list or set of message_ids and it will return the ones that have been sent to
+        and the ones who haven't as sets in a tuple. Message Id order is not guaranteed, duplicates are removed.
+        """
+        if not isinstance(message_ids, list):
+            message_ids = [message_ids]
+
+        message_ids = set(message_ids)
+
+        existing_message_ids = set(self.values_list('message_id', flat=True).filter(message_id__in=message_ids))
+        missing_message_ids = message_ids - existing_message_ids
+
+        return existing_message_ids, missing_message_ids
 
     def mark_all_read(self, user_id: int):
         now = timezone.now()

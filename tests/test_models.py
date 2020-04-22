@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model
 from django.core import mail
 from django.core.exceptions import ValidationError
 from django.test import TestCase
+from django.utils import timezone
 from faker import Faker
 from inbox import signals
 from inbox.constants import MessageLogStatus
@@ -91,6 +92,24 @@ class MessageTestCase(AppPushTestCaseMixin, TestCase):
             self.assertTrue(message_log.medium in (MessageMedium.EMAIL, MessageMedium.APP_PUSH) and message_log.medium not in used)
             self.assertEqual(message.pk, message_log.message_id)
             used.append(message_log.medium)
+
+    def test_defined_message_id_exists(self):
+
+        self.assertEqual(MessageLog.objects.count(), 0)
+
+        now_str = timezone.now().strftime('%Y%m%d')
+        test_message_id = f'default_{self.user.pk}_{now_str}'
+        Message.objects.create(user=self.user, key='default', message_id=test_message_id)
+
+        existing_message_ids, missing_message_ids = Message.objects.exists(test_message_id)
+
+        self.assertEqual(existing_message_ids, set([test_message_id]))
+        self.assertEqual(missing_message_ids, set())
+
+        existing_message_ids, missing_message_ids = Message.objects.exists([test_message_id, '123'])
+
+        self.assertEqual(existing_message_ids, set([test_message_id]))
+        self.assertEqual(missing_message_ids, set(['123']))
 
     def test_create_message_process_message_logs(self):
 

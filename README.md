@@ -134,6 +134,31 @@ Example routing setup:
     users_router = router.register(r'users', UserViewSet)
     users_router.register(r'messages', MessageViewSet, basename='users_messages', parents_query_lookups=['user'])
     messages_router = router.register(r'messages', MessageViewSet, basename='messages')
+
+#### Usage
+
+Simple:
+
+```python
+Message.objects.create(user=user, key='example_message_key')
+```
+
+Use a message_id if you need to be able to track whether you've sent a message before (eg did we send this user their
+morning reminder to drink coffee on Mon, Aug 8, 2010?)
+
+```python
+Message.objects.create(user=user, key='morning_coffee_reminder', message_id=f'mcr_{user.pk}_20100808')
+```
+
+Determine whether a message id (or list of a message ids) have Messages.
+
+```python
+existing_message_ids, missing_message_ids = Message.objects.exists(msg_id_1)
+```
+
+```python
+existing_message_ids, missing_message_ids = Message.objects.exists([msg_id_1, msg_id_2])
+```
     
 
 Test
