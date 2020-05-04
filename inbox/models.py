@@ -23,7 +23,7 @@ from toolz import merge
 from inbox import settings as inbox_settings
 from inbox.constants import MessageMedium, MessageLogStatus, MessageLogFailureReason
 from inbox.core.app_push.message import AppPushMessage
-from inbox.signals import message_preferences_changed, unread_count
+from inbox.signals import unread_count
 from inbox.test.utils import dump_template
 
 User = get_user_model()
@@ -70,6 +70,21 @@ class MessageManager(BaseManager.from_queryset(MessageQuerySet)):
 
 def get_message_groups():
     return inbox_settings.get_config()['MESSAGE_GROUPS']
+
+
+def is_app_push_enabled():
+    """
+    If any of the preferences are set to true/false for app_push then it's enabled.
+    :return: boolean
+    """
+
+    message_groups = get_message_groups()
+
+    for message_group in message_groups:
+        if message_group['preference_defaults']['app_push'] is not None:
+            return True
+
+    return False
 
 
 def get_message_group_default():
@@ -242,6 +257,10 @@ class Message(models.Model):
     def _send_unread_count(self):
         # Send out new unread count
         count = Message.objects.unread_count(user_id=self.user.pk)
+
+        if not inbox_settings.get_config()['DISABLE_NEW_DATA_SILENT_APP_PUSH'] and is_app_push_enabled():
+            AppPushMessage(self.user, None, None, data={'inbox_message_unread_count': count}).send()
+
         unread_count.send(sender=self.__class__, count=count)
 
     def _get_group_from_key(self):

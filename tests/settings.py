@@ -89,16 +89,16 @@ INBOX_CONFIG = {
             'message_keys': ['account_updated']
         },
         {
-            'id': 'friend_requests',
-            'label': 'Friend Requests',
-            'description': "Receive reminders about friend requests.",
-            'preference_defaults': {
-                'app_push': True,
-                'email': True,
-                'sms': True,
-                'web_push': True
+            "id": "friend_requests",
+            "label": "Friend Requests",
+            "description": "Receive reminders about friend requests.",
+            "preference_defaults": {
+                "app_push": True,
+                "email": True,
+                "sms": True,
+                "web_push": True
             },
-            'message_keys': ['new_friend_request', 'friend_request_accepted']
+            "message_keys": ["new_friend_request", "friend_request_accepted"]
         },
         {
             'id': 'important_updates',

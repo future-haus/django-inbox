@@ -33,7 +33,8 @@ CONFIG_DEFAULTS = {
     'BACKENDS': {
         'APP_PUSH': 'inbox.core.app_push.backends.locmem.AppPushBackend'
     },
-    'TESTING_MEDIUM_OUTPUT_PATH': None
+    'TESTING_MEDIUM_OUTPUT_PATH': None,
+    'DISABLE_NEW_DATA_SILENT_APP_PUSH': False
 }
 
 

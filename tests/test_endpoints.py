@@ -12,6 +12,7 @@ from inbox import signals
 from inbox.core import app_push
 
 from inbox.models import Message, MessageLog
+from inbox.test.utils import AppPushTestCaseMixin
 from inbox.utils import process_new_messages
 from tests.models import DeviceGroup
 from tests.schema import message_preferences, messages, message
@@ -20,7 +21,7 @@ from tests.test import TestCase
 User = get_user_model()
 
 
-class DeviceGroupTests(TestCase):
+class DeviceGroupTests(AppPushTestCaseMixin, TestCase):
     fixtures = ['users']
 
     def setUp(self):
@@ -141,7 +142,7 @@ class DeviceGroupTests(TestCase):
 
         process_new_messages()
 
-        self.assertEqual(len(app_push.outbox), 1)
+        self.assertEqual(len(app_push.outbox), 3)
         self.assertEqual(len(mail.outbox), 1)
 
         app_push.outbox = []

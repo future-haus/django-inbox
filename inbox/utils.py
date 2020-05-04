@@ -21,5 +21,3 @@ def process_new_messages():
                 message_log.status = MessageLogStatus.SKIPPED_FOR_PREF
 
             message_log.save()
-
-

@@ -119,7 +119,7 @@ class MessageTestCase(AppPushTestCaseMixin, TestCase):
 
         process_new_messages()
 
-        self.assertEqual(len(app_push.outbox), 1)
+        self.assertEqual(len(app_push.outbox), 2)
         self.assertEqual(len(mail.outbox), 1)
 
     def test_create_message_process_message_logs_user_has_push_off(self):
@@ -129,9 +129,6 @@ class MessageTestCase(AppPushTestCaseMixin, TestCase):
         self.user.message_preferences.groups = groups
         self.user.message_preferences.save()
 
-        # TODO Django's test runner manages resetting mail.outbox, our app push one needs a custom TestCase so that
-        #  we can do the same, until then manually handle it
-        app_push.outbox = []
         self.assertEqual(MessageLog.objects.count(), 0)
 
         message = Message.objects.create(user=self.user, key='default')
@@ -141,7 +138,7 @@ class MessageTestCase(AppPushTestCaseMixin, TestCase):
 
         process_new_messages()
 
-        self.assertEqual(len(app_push.outbox), 0)
+        self.assertEqual(len(app_push.outbox), 1)
         self.assertEqual(len(mail.outbox), 1)
 
         for message_log in message.logs.all():
