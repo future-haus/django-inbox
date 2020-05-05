@@ -40,6 +40,20 @@ class MessageQuerySet(models.QuerySet):
 
 class MessageManager(BaseManager.from_queryset(MessageQuerySet)):
 
+    def create(self, *args, fail_silently=None, **kwargs):
+
+        if fail_silently is None:
+            fail_silently = inbox_settings.get_config()['MESSAGE_CREATE_FAIL_SILENTLY']
+
+        res = None
+        try:
+            res = super().create(*args, **kwargs)
+        except Exception as e:
+            if not fail_silently:
+                raise e
+
+        return res
+
     def exists(self, message_ids: Union[Set[str], List[str], str]) -> Tuple[Set[str], Set[str]]:
         """
         Pass it a list or set of message_ids and it will return the ones that have been sent to

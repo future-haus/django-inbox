@@ -1,11 +1,13 @@
 from unittest.mock import MagicMock
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core import mail
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.utils import timezone
 from faker import Faker
+from inbox import settings as inbox_settings
 from inbox import signals
 from inbox.constants import MessageLogStatus
 from inbox.core import app_push
@@ -73,8 +75,22 @@ class MessageTestCase(AppPushTestCaseMixin, TestCase):
 
     def test_save_message_with_invalid_key(self):
 
+        # We use lru_cache on INBOX_CONFIG, clear it out
+        inbox_settings.get_config.cache_clear()
+        # Then override the INBOX_CONFIG setting, we'll add a new message group and see it we get the expected return
+        INBOX_CONFIG = settings.INBOX_CONFIG.copy()
+        INBOX_CONFIG['MESSAGE_CREATE_FAIL_SILENTLY'] = False
+        with self.settings(INBOX_CONFIG=INBOX_CONFIG):
+            with self.assertRaises(ValidationError) as context:
+                Message.objects.create(user=self.user, key='non_existent_key')
+
+            self.assertTrue('Subject template for "non_existent_key" does not exist.' in context.exception.messages[0])
+
+        inbox_settings.get_config.cache_clear()
+
+        # Verify that you can adjust fail_silently on a per call basis
         with self.assertRaises(ValidationError) as context:
-            Message.objects.create(user=self.user, key='non_existent_key')
+            Message.objects.create(user=self.user, key='non_existent_key', fail_silently=False)
 
         self.assertTrue('Subject template for "non_existent_key" does not exist.' in context.exception.messages[0])
 
@@ -154,3 +170,9 @@ class MessageTestCase(AppPushTestCaseMixin, TestCase):
         Message.objects.create(user=self.user, key='push_only')
 
         process_new_messages()
+
+    def test_create_message_fail_silently(self):
+
+        message = Message.objects.create(user=self.user)
+
+        self.assertIsNone(message)
