@@ -50,7 +50,8 @@ class SettingsTestCase(TestCase):
             },
             'TESTING_MEDIUM_OUTPUT_PATH': None,
             'DISABLE_NEW_DATA_SILENT_APP_PUSH': False,
-            'MESSAGE_CREATE_FAIL_SILENTLY': True
+            'MESSAGE_CREATE_FAIL_SILENTLY': True,
+            'HOOKS_MODULE': None
         }
 
         with self.settings(INBOX_CONFIG={}):
@@ -89,7 +90,7 @@ class SettingsTestCase(TestCase):
                         'sms': None,
                         'web_push': None
                     },
-                    'message_keys': ['account_updated']
+                    'message_keys': ['new_account', 'account_updated']
                 },
                 {
                     'id': 'friend_requests',
@@ -140,7 +141,8 @@ class SettingsTestCase(TestCase):
             },
             'TESTING_MEDIUM_OUTPUT_PATH': None,
             'DISABLE_NEW_DATA_SILENT_APP_PUSH': False,
-            'MESSAGE_CREATE_FAIL_SILENTLY': True
+            'MESSAGE_CREATE_FAIL_SILENTLY': True,
+            'HOOKS_MODULE': 'tests.hooks'
         }
 
         inbox_settings.get_config.cache_clear()

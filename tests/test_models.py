@@ -14,7 +14,7 @@ from inbox.core import app_push
 
 from inbox.models import Message, get_message_group_default, MessageMedium, MessageLog
 from inbox.test.utils import AppPushTestCaseMixin
-from inbox.utils import process_new_messages
+from inbox.utils import process_new_messages, process_new_message_logs
 
 User = get_user_model()
 fake = Faker()
@@ -134,8 +134,9 @@ class MessageTestCase(AppPushTestCaseMixin, TestCase):
         Message.objects.create(user=self.user, key='default')
 
         process_new_messages()
+        process_new_message_logs()
 
-        self.assertEqual(len(app_push.outbox), 2)
+        self.assertEqual(len(app_push.outbox), 3)
         self.assertEqual(len(mail.outbox), 1)
 
     def test_create_message_process_message_logs_user_has_push_off(self):
@@ -149,12 +150,14 @@ class MessageTestCase(AppPushTestCaseMixin, TestCase):
 
         message = Message.objects.create(user=self.user, key='default')
 
+        process_new_messages()
+
         # Verify two message log entries
         self.assertTrue(len(message.logs.all()), 2)
 
-        process_new_messages()
+        process_new_message_logs()
 
-        self.assertEqual(len(app_push.outbox), 1)
+        self.assertEqual(len(app_push.outbox), 2)
         self.assertEqual(len(mail.outbox), 1)
 
         for message_log in message.logs.all():
@@ -176,3 +179,20 @@ class MessageTestCase(AppPushTestCaseMixin, TestCase):
         message = Message.objects.create(user=self.user)
 
         self.assertIsNone(message)
+
+    def test_message_is_cancelled_before_sending_but_schedules_future(self):
+        Message.objects.create(user=self.user, key='new_account', fail_silently=False)
+
+        messages_count = Message.objects.count()
+        self.assertEqual(messages_count, 1)
+
+        process_new_messages()
+        process_new_message_logs()
+
+        message_logs_count = MessageLog.objects.count()
+        messages_count = Message.objects.count()
+
+        self.assertEqual(message_logs_count, 0)
+        self.assertEqual(messages_count, 2)
+
+

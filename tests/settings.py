@@ -86,7 +86,7 @@ INBOX_CONFIG = {
             'id': 'account_updated',
             'label': 'Account Updated',
             'description': 'When you update your account.',
-            'message_keys': ['account_updated']
+            'message_keys': ['new_account', 'account_updated']
         },
         {
             "id": "friend_requests",
@@ -125,7 +125,8 @@ INBOX_CONFIG = {
     'BACKENDS': {
         'APP_PUSH': 'inbox.core.app_push.backends.locmem.AppPushBackend'
     },
-    'TESTING_MEDIUM_OUTPUT_PATH': None
+    'TESTING_MEDIUM_OUTPUT_PATH': None,
+    'HOOKS_MODULE': 'tests.hooks'
 }
 
 GOOGLE_FCM_SENDER_ID = '12345'

@@ -28,5 +28,8 @@ class CronTestCase(AppPushTestCaseMixin, TestCase):
         response = self.get('/cron/process_new_messages')
         self.assertHTTP200(response)
 
-        self.assertEqual(len(app_push.outbox), 2)
+        response = self.get('/cron/process_new_message_logs')
+        self.assertHTTP200(response)
+
+        self.assertEqual(len(app_push.outbox), 3)
         self.assertEqual(len(mail.outbox), 1)

@@ -2,6 +2,7 @@ import inspect
 import json
 import os
 import uuid
+from functools import lru_cache
 from typing import List, Union, Tuple, Set
 
 from annoying.fields import AutoOneToOneField
@@ -11,7 +12,7 @@ from django.contrib.postgres.fields import JSONField
 from django.core import exceptions
 from django.core.exceptions import ValidationError
 from django.core.mail import EmailMessage
-from django.db import models, transaction
+from django.db import models
 from django.db.models import UniqueConstraint
 from django.db.models.manager import BaseManager
 from django.template import loader, TemplateDoesNotExist
@@ -78,7 +79,7 @@ class MessageManager(BaseManager.from_queryset(MessageQuerySet)):
             unread_count.send(sender=Message, count=0)
 
     def unread_count(self, user_id: int):
-        return self.filter(user_id=user_id, read_at__isnull=True, deleted_at__isnull=True,
+        return self.filter(user_id=user_id, send_at__lte=timezone.now(), read_at__isnull=True, deleted_at__isnull=True,
                            is_hidden=False).count()
 
 
@@ -86,6 +87,7 @@ def get_message_groups():
     return inbox_settings.get_config()['MESSAGE_GROUPS']
 
 
+@lru_cache()
 def is_app_push_enabled():
     """
     If any of the preferences are set to true/false for app_push then it's enabled.
@@ -120,7 +122,7 @@ class Message(models.Model):
             UniqueConstraint(fields=['user', 'message_id'], name='unique_user_message_id')
         ]
         indexes = [
-            models.Index(fields=['-send_at', 'is_hidden', 'deleted_at']),
+            models.Index(fields=['-send_at', 'read_at', 'deleted_at', 'is_hidden']),
         ]
         ordering = ('-send_at',)
 
@@ -151,6 +153,7 @@ class Message(models.Model):
                                                              "you don't want it to show up in the user's inbox, set "
                                                              "this flag to true.")
     send_at = models.DateTimeField(db_index=True, default=timezone.now)
+    is_logged = models.BooleanField(default=False)
     read_at = models.DateTimeField(blank=True, db_index=True, null=True, verbose_name='Marked Read At')
     created_at = models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='Created')
     updated_at = models.DateTimeField(auto_now=True, db_index=True, verbose_name='Updated')
@@ -192,13 +195,11 @@ class Message(models.Model):
             self.subject = self._build_subject()
             self.body = self._build_body()
 
-        with transaction.atomic():
-            super().save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
-            if is_new:
-                self.log()
-
-        self._send_unread_count()
+        # If the message is in the future we don't need to send the unread count
+        if self.send_at <= timezone.now():
+            self._send_unread_count()
 
     def delete(self, using=None, keep_parents=False):
         self.deleted_at = timezone.now()
@@ -207,15 +208,6 @@ class Message(models.Model):
         self._send_unread_count()
 
         return 1
-
-    def log(self):
-        # Determine what mediums, based on the config, that it can be sent to.
-        # We don't filter out based on the user's preferences yet incase it's for the future, we determine whether
-        #   to send right before actually sending
-        mediums = [k for k, v in self._get_group_from_key()['preference_defaults'].items() if v is not None]
-
-        for medium in mediums:
-            MessageLog.objects.create(message=self, medium=MessageMedium.get(medium.upper()), send_at=self.send_at)
 
     def _get_base_templates(self):
         """

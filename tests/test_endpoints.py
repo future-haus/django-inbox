@@ -13,7 +13,7 @@ from inbox.core import app_push
 
 from inbox.models import Message, MessageLog
 from inbox.test.utils import AppPushTestCaseMixin
-from inbox.utils import process_new_messages
+from inbox.utils import process_new_messages, process_new_message_logs
 from tests.models import DeviceGroup
 from tests.schema import message_preferences, messages, message
 from tests.test import TestCase
@@ -119,7 +119,7 @@ class DeviceGroupTests(AppPushTestCaseMixin, TestCase):
             self.assertIsNone(response.data['results'][1]['data'])
 
             # Assert the signal was called only once with the args
-            handler.assert_called_with(signal=signals.unread_count, count=2, sender=Message)
+            handler.assert_called_with(signal=signals.unread_count, count=1, sender=Message)
 
             # Mark them as read
             response = self.post(f'/api/v1/users/{user_id}/messages/read')
@@ -135,12 +135,13 @@ class DeviceGroupTests(AppPushTestCaseMixin, TestCase):
             self.assertTrue(response.data['results'][0]['is_read'])
             self.assertTrue(response.data['results'][1]['is_read'])
 
+        process_new_messages()
+
         # Verify there are message logs for both of these messages
         message_logs = MessageLog.objects.filter(message__user_id=user_id)
+        self.assertEqual(len(message_logs), 2)
 
-        self.assertEqual(len(message_logs), 4)
-
-        process_new_messages()
+        process_new_message_logs()
 
         self.assertEqual(len(app_push.outbox), 3)
         self.assertEqual(len(mail.outbox), 1)
@@ -150,8 +151,9 @@ class DeviceGroupTests(AppPushTestCaseMixin, TestCase):
 
         with freeze_time(future_send_at):
             process_new_messages()
+            process_new_message_logs()
 
-            self.assertEqual(len(app_push.outbox), 1)
+            self.assertEqual(len(app_push.outbox), 2)
             self.assertEqual(len(mail.outbox), 1)
 
     def test_message_preferences_from_different_user(self):
