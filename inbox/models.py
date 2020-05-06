@@ -239,17 +239,22 @@ class Message(models.Model):
     def _build_subject(self):
         template_name = f'inbox/{self.key}/subject.txt'
         template = loader.get_template(template_name)
+        template.backend.engine.autoescape = False
         context = self._get_context_for_template()
-        return template.render(context)
+        res = template.render(context)
+        return ''.join(res.splitlines())
 
     def _build_body(self):
         try:
+            autoescape = True
             template_name = f'inbox/{self.key}/body.html'
             template = loader.get_template(template_name)
         except TemplateDoesNotExist:
+            autoescape = False
             template_name = f'inbox/{self.key}/body.txt'
             template = loader.get_template(template_name)
 
+        template.backend.engine.autoescape = autoescape
         context = self._get_context_for_template()
         return template.render(context)
 
@@ -324,7 +329,7 @@ class MessageLog(models.Model):
         subject = self._build_subject()
         body = self._build_body()
 
-        EmailMessage(''.join(subject.splitlines()), body, to=[self.message.user.email]).send()
+        EmailMessage(subject, body, to=[self.message.user.email]).send()
 
     def _get_context_for_template(self):
         return {
@@ -359,12 +364,18 @@ class MessageLog(models.Model):
                                            f'does not exist.']})
 
         context = self._get_context_for_template()
+
+        autoescape = True
+        if template.origin.template_name.endswith('txt'):
+            autoescape = False
+
+        template.backend.engine.autoescape = autoescape
         subject = template.render(context)
 
         if settings.INBOX_CONFIG['TESTING_MEDIUM_OUTPUT_PATH']:
             dump_template(template.template.name, subject)
 
-        return subject
+        return ''.join(subject.splitlines())
 
     @staticmethod
     def _get_body_template_names(key: str, medium: MessageMedium = None, debug=False):
@@ -398,7 +409,12 @@ class MessageLog(models.Model):
         except TemplateDoesNotExist:
             raise ValidationError({'key': [f'Subject template for "{self.message.key}/{self.medium}" does not exist.']})
 
+        autoescape = True
+        if template.origin.template_name.endswith('txt'):
+            autoescape = False
+
         context = self._get_context_for_template()
+        template.backend.engine.autoescape = autoescape
         body = template.render(context)
 
         if settings.INBOX_CONFIG['TESTING_MEDIUM_OUTPUT_PATH']:

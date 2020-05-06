@@ -23,7 +23,7 @@ class CronTestCase(AppPushTestCaseMixin, TestCase):
 
         self.assertEqual(MessageLog.objects.count(), 0)
 
-        Message.objects.create(user=self.user, key='default')
+        message = Message.objects.create(user=self.user, key='default', fail_silently=False)
 
         response = self.get('/cron/process_new_messages')
         self.assertHTTP200(response)
@@ -33,3 +33,5 @@ class CronTestCase(AppPushTestCaseMixin, TestCase):
 
         self.assertEqual(len(app_push.outbox), 3)
         self.assertEqual(len(mail.outbox), 1)
+
+        self.assertEqual(message.subject, "Default Subject Line's Text")
