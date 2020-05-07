@@ -18,37 +18,39 @@ class Command(BaseCommand):
         used_template_names = []
         message_groups = []
         for message_group in inbox_settings.get_config()['MESSAGE_GROUPS']:
-            template_names = MessageLog._get_subject_template_names(message_group['id'], None, True)
-            template_names.extend(MessageLog._get_body_template_names(message_group['id'], None, True))
             for k, v in message_group['preference_defaults'].items():
                 if v is not None:
-                    template_names.extend(MessageLog._get_subject_template_names(message_group['id'], MessageMedium.get(k.upper()), True))
-                    template_names.extend(MessageLog._get_body_template_names(message_group['id'], MessageMedium.get(k.upper()), True))
 
-                    for template_name, required in template_names:
-                        if template_name in used_template_names:
-                            continue
+                    for message_key in message_group['message_keys']:
+                        template_names = MessageLog._get_subject_template_names(message_key, None, True)
+                        template_names.extend(MessageLog._get_body_template_names(message_key, None, True))
+                        template_names.extend(MessageLog._get_subject_template_names(message_key, MessageMedium.get(k.upper()), True))
+                        template_names.extend(MessageLog._get_body_template_names(message_key, MessageMedium.get(k.upper()), True))
 
-                        used_template_names.append(template_name)
+                        for template_name, required in template_names:
+                            if template_name in used_template_names:
+                                continue
 
-                        try:
-                            loader.get_template(template_name)
-                        except TemplateDoesNotExist:
-                            message_groups.append({
-                                'file': template_name,
-                                'key': message_group['id'],
-                                'medium': k.lower(),
-                                'required': required,
-                                'found': False
-                            })
-                        else:
-                            message_groups.append({
-                                'file': template_name,
-                                'key': message_group['id'],
-                                'medium': k.lower(),
-                                'required': required,
-                                'found': True
-                            })
+                            used_template_names.append(template_name)
+
+                            try:
+                                loader.get_template(template_name)
+                            except TemplateDoesNotExist:
+                                message_groups.append({
+                                                           'file': template_name,
+                                                           'key': message_key,
+                                                           'medium': k.lower(),
+                                                           'required': required,
+                                                           'found': False
+                                                              })
+                            else:
+                                message_groups.append({
+                                                           'file': template_name,
+                                                           'key': message_key,
+                                                           'medium': k.lower(),
+                                                           'required': required,
+                                                           'found': True
+                                                              })
 
         table = BeautifulTable()
         table.column_headers = ['File', 'Required', 'Found']

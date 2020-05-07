@@ -1,5 +1,12 @@
 # Releases
 
+### 0.3.1 (2020-05-07)
+
+Fixes
+
+- Fix issue with `inbox_status` management command where it was using the group id instead of the message keys to find
+templates.
+
 ### 0.3.0 (2020-05-06)
 
 Features

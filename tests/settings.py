@@ -119,6 +119,18 @@ INBOX_CONFIG = {
                 'email': None
             },
             'message_keys': ['push_only']
+        },
+        {
+            'id': 'group_with_all_mediums_off',
+            'label': 'Group with All Mediums Off',
+            'description': "This group should not show up in preferences.",
+            'preference_defaults': {
+                'app_push': None,
+                'email': None,
+                'web_push': None,
+                'sms': None
+            },
+            'message_keys': ['all_mediums_off']
         }
     ],
     'APP_PUSH_NOTIFICATION_KEY_GETTER': 'tests.models.get_notification_key',

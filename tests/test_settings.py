@@ -127,6 +127,21 @@ class SettingsTestCase(TestCase):
                     },
                     'data': {},
                     'message_keys': ['push_only']
+                },
+                {
+                    'id': 'group_with_all_mediums_off',
+                    'label': 'Group with All Mediums Off',
+                    'description': "This group should not show up in preferences.",
+                    'is_preference': True,
+                    'use_preference': None,
+                    'preference_defaults': {
+                        'app_push': None,
+                        'email': None,
+                        'web_push': None,
+                        'sms': None
+                    },
+                    'data': {},
+                    'message_keys': ['all_mediums_off']
                 }
             ],
             'APP_PUSH_NOTIFICATION_KEY_GETTER': 'tests.models.get_notification_key',
@@ -142,5 +157,5 @@ class SettingsTestCase(TestCase):
         inbox_settings.get_config.cache_clear()
         settings = inbox_settings.get_config()
 
-        self.maxDiff = 4096
+        self.maxDiff = 8192
         self.assertEqual(settings, test_app_config)
