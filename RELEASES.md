@@ -1,5 +1,17 @@
 # Releases
 
+### 0.3.0 (2020-05-06)
+
+Features
+
+- Now you can add a `data` object onto each `message_group` on INBOX_CONFIG, this data will be available in templates
+as `data_group` and returned on each message.group object on the Messages API endpoints.
+
+Fixes
+
+- If a `Message` never generates a `MessageLog` because they are cancelled, etc then the `Message` should not show up 
+in the Inbox.
+
 ### 0.2.6 (2020-05-06)
 
 Features

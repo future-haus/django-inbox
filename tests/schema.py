@@ -1,11 +1,12 @@
 
 group = {
     'type': 'object',
-    'required': ['id', 'label', 'description'],
+    'required': ['id', 'label', 'description', 'data'],
     'properties': {
         'id': {'type': 'string'},
         'label': {'type': 'string'},
         'description': {'type': 'string'},
+        'data': {'type': ['null', 'object']},
         'app_push': {'type': ['null', 'boolean']},
         'email': {'type': ['null', 'boolean']},
         'sms': {'type': ['null', 'boolean']},
@@ -42,7 +43,16 @@ message = {
         'subject': {'type': 'string'},
         'body': {'type': 'string'},
         'data': {'type': ['null', 'object']},
-        'group': {'type': 'string'},
+        'group': {
+            'type': 'object',
+            'required': ['id', 'label', 'data'],
+            'properties': {
+                'id': {'type': 'string'},
+                'label': {'type': 'string'},
+                'data': {'type': ['null', 'object']}
+            },
+            'additionalProperties': False
+        },
         'is_read': {'type': 'boolean'},
         'created_at': {'type': 'string'}
     },

@@ -1,26 +1,9 @@
 from rest_framework import serializers
 
 from inbox import settings as inbox_settings
-from inbox.models import Message, MessagePreferences
+from inbox.models import Message, get_message_group
 
 MESSAGE_GROUPS = inbox_settings.get_config()['MESSAGE_GROUPS']
-
-
-class MessagePreferenceSerializer(serializers.Serializer):
-
-    app_push = serializers.NullBooleanField()
-    email = serializers.NullBooleanField()
-    sms = serializers.NullBooleanField()
-    web_push = serializers.NullBooleanField()
-
-
-class MessagePreferencesSerializer(serializers.ModelSerializer):
-
-    groups = MessagePreferenceSerializer(many=True)
-
-    class Meta:
-        model = MessagePreferences
-        fields = ['groups']
 
 
 class MessageListSerializer(serializers.ModelSerializer):

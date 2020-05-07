@@ -104,7 +104,7 @@ class MessageViewSet(RetrieveModelMixin, UpdateModelMixin, DestroyModelMixin, Ge
     def get_queryset(self):
         now = timezone.now()
         # INFO ordering of the query is important here, aligns with the combined index
-        qs = super().get_queryset().filter(send_at__lte=now, is_hidden=False, deleted_at__isnull=True)
+        qs = super().get_queryset().filter(send_at__lte=now, is_hidden=False, is_logged=True, deleted_at__isnull=True)
         return qs
 
     # TODO Move our common lib to a pip repo and use Action serializer

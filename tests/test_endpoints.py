@@ -11,7 +11,7 @@ from inbox import settings as inbox_settings
 from inbox import signals
 from inbox.core import app_push
 
-from inbox.models import Message, MessageLog
+from inbox.models import Message, MessageLog, get_message_groups, get_message_group
 from inbox.test.utils import AppPushTestCaseMixin
 from inbox.utils import process_new_messages, process_new_message_logs
 from tests.models import DeviceGroup
@@ -77,6 +77,8 @@ class DeviceGroupTests(AppPushTestCaseMixin, TestCase):
     @responses.activate
     def test_update_user_that_generates_inbox_message(self):
         inbox_settings.get_config.cache_clear()
+        get_message_group.cache_clear()
+        get_message_groups.cache_clear()
 
         user_id = 1
         user = User.objects.get(pk=user_id)
@@ -109,13 +111,17 @@ class DeviceGroupTests(AppPushTestCaseMixin, TestCase):
             self.assertFalse(response.data['results'][0]['is_read'])
             self.assertEqual(response.data['results'][0]['subject'], 'Account Updated Subject')
             self.assertEqual(response.data['results'][0]['body'], 'Account updated body.')
-            self.assertEqual(response.data['results'][0]['group'], 'account_updated')
+            self.assertEqual(response.data['results'][0]['group'], {'id': 'account_updated',
+                                                                    'label': 'Account Updated',
+                                                                    'data': {}})
             self.assertIsNone(response.data['results'][0]['data'])
 
             self.assertFalse(response.data['results'][1]['is_read'])
             self.assertEqual(response.data['results'][1]['subject'], 'Account Updated Subject')
             self.assertEqual(response.data['results'][1]['body'], 'Account updated body.')
-            self.assertEqual(response.data['results'][1]['group'], 'account_updated')
+            self.assertEqual(response.data['results'][1]['group'], {'id': 'account_updated',
+                                                                    'label': 'Account Updated',
+                                                                    'data': {}})
             self.assertIsNone(response.data['results'][1]['data'])
 
             # Assert the signal was called only once with the args
@@ -223,6 +229,9 @@ class DeviceGroupTests(AppPushTestCaseMixin, TestCase):
 
         # We use lru_cache on INBOX_CONFIG, clear it out
         inbox_settings.get_config.cache_clear()
+        get_message_group.cache_clear()
+        get_message_groups.cache_clear()
+
         # Then override the INBOX_CONFIG setting, we'll add a new message group and see it we get the expected return
         INBOX_CONFIG = settings.INBOX_CONFIG.copy()
         MESSAGE_GROUPS = INBOX_CONFIG['MESSAGE_GROUPS'].copy()
@@ -250,6 +259,8 @@ class DeviceGroupTests(AppPushTestCaseMixin, TestCase):
         # Then override the INBOX_CONFIG setting, we'll add a new message group to the front
         #  and see it we get the expected return
         inbox_settings.get_config.cache_clear()
+        get_message_group.cache_clear()
+        get_message_groups.cache_clear()
         MESSAGE_GROUPS.insert(0, {
             'id': 'test_2',
             'label': 'Test 2',
@@ -290,6 +301,8 @@ class DeviceGroupTests(AppPushTestCaseMixin, TestCase):
         #  we do this so that a preference that is brought back and a user had chosen to enable/disable it we'd still
         #  have their old preference.
         inbox_settings.get_config.cache_clear()
+        get_message_group.cache_clear()
+        get_message_groups.cache_clear()
         INBOX_CONFIG['MESSAGE_GROUPS'] = [INBOX_CONFIG['MESSAGE_GROUPS'][0]]
         with self.settings(INBOX_CONFIG=INBOX_CONFIG):
             response = self.client.get(f'/api/v1/users/{user.pk}/message_preferences')
@@ -311,6 +324,8 @@ class DeviceGroupTests(AppPushTestCaseMixin, TestCase):
             self.assertNotEqual(group['id'], 'test_2')
 
         inbox_settings.get_config.cache_clear()
+        get_message_group.cache_clear()
+        get_message_groups.cache_clear()
         with self.settings(INBOX_CONFIG=INBOX_CONFIG):
             # Now save the single message group we have, it should still keep the old ones and include the new one even
             #  though they won't be returned in the API
@@ -341,6 +356,10 @@ class DeviceGroupTests(AppPushTestCaseMixin, TestCase):
 
         for group in user.message_preferences._groups:
             self.assertNotEqual(group['id'], 'test_1')
+
+        inbox_settings.get_config.cache_clear()
+        get_message_group.cache_clear()
+        get_message_groups.cache_clear()
 
     def test_message_preference_medium(self):
         user_id = 1
@@ -393,6 +412,9 @@ class DeviceGroupTests(AppPushTestCaseMixin, TestCase):
         self.validate_list(response, messages)
         self.assertTrue(len(response.data['results']), 1)
 
+        process_new_messages()
+        process_new_message_logs()
+
         # Get individual message
         response = self.get(f'/api/v1/messages/{message_id}')
         self.assertHTTP200(response)
@@ -440,6 +462,9 @@ class DeviceGroupTests(AppPushTestCaseMixin, TestCase):
         self.validate_list(response, messages)
         self.assertTrue(len(response.data['results']), 1)
 
+        process_new_messages()
+        process_new_message_logs()
+
         # Delete message, make sure it doesn't come back in list
         response = self.delete(f'/api/v1/messages/{message_id}')
         self.assertHTTP204(response)
@@ -451,3 +476,31 @@ class DeviceGroupTests(AppPushTestCaseMixin, TestCase):
         response = self.get(f'/api/v1/users/{user_id}/messages')
         self.assertHTTP200(response)
         self.assertEqual(len(response.data['results']), 0)
+
+    def test_message_that_never_generates_message_log_should_not_be_visible(self):
+        user_id = 1
+        user = User.objects.get(pk=user_id)
+        self.client.force_login(user)
+
+        future_send_at = timezone.now() + timezone.timedelta(days=2)
+        message = Message.objects.create(user=user, key='new_friend_request', fail_silently=False,
+                                         send_at=future_send_at)
+
+        response = self.get(f'/api/v1/users/{user_id}/messages')
+
+        self.assertEqual(len(response.data['results']), 0)
+
+        with freeze_time(future_send_at):
+            process_new_messages()
+            process_new_message_logs()
+
+            response = self.get(f'/api/v1/users/{user_id}/messages')
+
+            self.assertEqual(len(response.data['results']), 0)
+
+        # Check and see if message is set to is_hidden=True and is_logged=True
+
+        message.refresh_from_db()
+        self.assertTrue(message.is_hidden)
+        self.assertTrue(message.is_logged)
+

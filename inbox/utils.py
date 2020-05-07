@@ -32,7 +32,7 @@ def process_new_messages():
                 if hooks_module:
                     try:
                         pre_message_log_save = import_string(f'{hooks_module}.{message.key}.pre_message_log_save')
-                    except ModuleNotFoundError as e:
+                    except (ImportError, ModuleNotFoundError) as e:
                         pass
 
                 if pre_message_log_save:
@@ -56,11 +56,14 @@ def process_new_messages():
             if hooks_module:
                 try:
                     post_message_to_logs = import_string(f'{hooks_module}.{message.key}.post_message_to_logs')
-                except ModuleNotFoundError as e:
+                except (ImportError, ModuleNotFoundError) as e:
                     pass
 
             if post_message_to_logs:
                 message = post_message_to_logs(message)
+
+            if message.logs.count() == 0:
+                message.is_hidden = True
 
             message.is_logged = True
             message.save()

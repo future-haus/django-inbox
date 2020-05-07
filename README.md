@@ -31,6 +31,7 @@ INBOX_CONFIG = {
             'description': 'General news and updates.',  # Can be used in clients to describe what this preference is for
             'is_preference': True,  # Whether this is just used for grouping purposes (False) or also as a preference (True)
             'use_preference': None,  # If is_preference is False, this defines which group to use as preference
+            'data': {},  # Arbitrary data block that is return on Message objects and available in templates as data_group
             'preference_defaults': {  # True/False or if you don't want that preference set to None
                 'app_push': True,
                 'email': True,

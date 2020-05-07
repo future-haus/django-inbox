@@ -83,8 +83,20 @@ class MessageManager(BaseManager.from_queryset(MessageQuerySet)):
                            is_hidden=False).count()
 
 
+@lru_cache()
 def get_message_groups():
     return inbox_settings.get_config()['MESSAGE_GROUPS']
+
+
+@lru_cache()
+def get_message_group(id_: str):
+    message_groups = get_message_groups()
+
+    for message_group in message_groups:
+        if message_group['id'] == id_:
+            return message_group
+
+    return None
 
 
 @lru_cache()
@@ -146,8 +158,8 @@ class Message(models.Model):
     message_id = models.CharField(db_index=True, max_length=255, default=default_message_id,
                                   help_text='Explicitly specifying a message id enables message de-duplication '
                                             'per user.')
-    group = models.CharField(db_index=True, default=get_message_group_default(), max_length=255,
-                             validators=(validate_group,))
+    group_id = models.CharField(db_index=True, default=get_message_group_default(), max_length=255,
+                                validators=(validate_group,))
     is_hidden = models.BooleanField(default=False, help_text="There may be cases you want to generate a message so "
                                                              "that it can trigger communication in other channels but "
                                                              "you don't want it to show up in the user's inbox, set "
@@ -162,6 +174,16 @@ class Message(models.Model):
     @property
     def is_read(self):
         return bool(self.read_at)
+
+    @property
+    def group(self):
+        group = get_message_group(self.group_id)
+
+        return {
+            'id': group['id'],
+            'label': group['label'],
+            'data': group['data']
+        }
 
     @is_read.setter
     def is_read(self, value: bool):
@@ -185,7 +207,7 @@ class Message(models.Model):
         if not group:
             raise ValidationError({'key': [f'Message Group not found for "{self.key}".']})
         else:
-            self.group = group['id']
+            self.group_id = group['id']
 
     def save(self, *args, **kwargs):
         is_new = not self.id
@@ -262,7 +284,8 @@ class Message(models.Model):
         return {
             'user': self.user,
             'data': self.data,
-            'data_email': self.data_email
+            'data_email': self.data_email,
+            'data_group': self.group
         }
 
     def _send_unread_count(self):
@@ -306,7 +329,7 @@ class MessageLog(models.Model):
         user = self.message.user
         message_group = self.message.group
 
-        preference = next((g for g in user.message_preferences.groups if g['id'] == message_group))
+        preference = next((g for g in user.message_preferences.groups if g['id'] == message_group['id']))
 
         if preference.get(self.medium.name.lower()):
             return True
@@ -335,7 +358,8 @@ class MessageLog(models.Model):
         return {
             'user': self.message.user,
             'data': self.message.data,
-            'data_email': self.message.data_email
+            'data_email': self.message.data_email,
+            'data_group': self.message.group
         }
 
     @staticmethod
@@ -471,7 +495,8 @@ def _get_props(message_group, include_all_keys):
     if include_all_keys:
         d.update({
             'label': message_group['label'],
-            'description': message_group['description']
+            'description': message_group['description'],
+            'data': message_group['data']
         })
 
     return d
@@ -485,7 +510,10 @@ def get_default_preferences(include_all_keys=False):
 
     # Remove any null mediums, they are disabled
     for k, default_preference in enumerate(default_preferences):
-        default_preferences[k] = {k: v for k, v in default_preference.items() if k in ('id', 'label', 'description') or v is not None}
+        default_preferences[k] = {k: v for k, v in default_preference.items() if k in ('id',
+                                                                                       'label',
+                                                                                       'description',
+                                                                                       'data') or v is not None}
 
     return default_preferences
 

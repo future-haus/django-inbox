@@ -1,20 +1,8 @@
-import os
-from unittest.mock import MagicMock
-
-from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.core import mail
-from django.core.exceptions import ValidationError
 from django.test import TestCase
 from faker import Faker
-from inbox import signals
-from inbox.constants import MessageLogStatus
-from inbox.core import app_push
 
 from inbox import settings as inbox_settings
-from inbox.models import Message, get_message_group_default, MessageMedium, MessageLog
-from inbox.utils import process_new_messages
-from tests.settings import BASE_DIR
 
 User = get_user_model()
 fake = Faker()
@@ -39,6 +27,7 @@ class SettingsTestCase(TestCase):
                         'sms': None,
                         'web_push': None
                     },
+                    'data': {},
                     'message_keys': ['default']
                 }
             ],
@@ -76,6 +65,7 @@ class SettingsTestCase(TestCase):
                         'sms': None,
                         'web_push': None
                     },
+                    'data': {},
                     'message_keys': ['default']
                 },
                 {
@@ -90,6 +80,7 @@ class SettingsTestCase(TestCase):
                         'sms': None,
                         'web_push': None
                     },
+                    'data': {},
                     'message_keys': ['new_account', 'account_updated']
                 },
                 {
@@ -104,6 +95,7 @@ class SettingsTestCase(TestCase):
                         'sms': True,
                         'web_push': True
                     },
+                    'data': {},
                     'message_keys': ['new_friend_request', 'friend_request_accepted']
                 },
                 {
@@ -118,6 +110,7 @@ class SettingsTestCase(TestCase):
                         'sms': None,
                         'web_push': None
                     },
+                    'data': {},
                     'message_keys': ['important_update']
                 },
                 {
@@ -132,6 +125,7 @@ class SettingsTestCase(TestCase):
                         'sms': None,
                         'web_push': None
                     },
+                    'data': {},
                     'message_keys': ['push_only']
                 }
             ],

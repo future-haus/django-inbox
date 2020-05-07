@@ -33,7 +33,7 @@ class MessageTestCase(AppPushTestCaseMixin, TestCase):
         message = Message.objects.create(user=self.user, key='default')
 
         self.assertEqual(message.user.email, self.user.email)
-        self.assertEqual(message.group, get_message_group_default())
+        self.assertEqual(message.group, {'id': 'default', 'label': 'Updates', 'data': {}})
         self.assertEqual(message.key, 'default')
 
     def test_unread_count_signal_gets_proper_data(self):
@@ -194,5 +194,3 @@ class MessageTestCase(AppPushTestCaseMixin, TestCase):
 
         self.assertEqual(message_logs_count, 0)
         self.assertEqual(messages_count, 2)
-
-

@@ -14,6 +14,7 @@ MESSAGE_GROUP_FILL = {
         'sms': None,
         'web_push': None
     },
+    'data': {},
     'message_keys': []
 }
 
@@ -24,6 +25,7 @@ CONFIG_DEFAULTS = {
             'id': 'default',
             'label': 'News and Updates',
             'description': 'General news and updates.',
+            'data': {},
             'message_keys': ['default']
         }
     ],
