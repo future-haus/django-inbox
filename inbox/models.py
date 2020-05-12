@@ -304,6 +304,17 @@ class Message(models.Model):
 
         return None
 
+    def should_skip_medium(self, medium):
+        if medium not in MEDIUMS:
+            raise ValueError('Invalid medium')
+
+        message_group = self._get_group_from_key()
+
+        if self.key in message_group[f'skip_{medium}']:
+            return True
+
+        return False
+
 
 class MessageLog(models.Model):
     """

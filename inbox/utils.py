@@ -23,6 +23,10 @@ def process_new_messages():
             mediums = [k for k, v in message._get_group_from_key()['preference_defaults'].items() if v is not None]
 
             for medium in mediums:
+
+                if message.should_skip_medium(medium):
+                    continue
+
                 medium_enum = MessageMedium.get(medium.upper())
                 message_log = MessageLog(message=message, medium=medium_enum, send_at=message.send_at)
 
@@ -91,7 +95,7 @@ def save_message_preferences(message_preferences: MessagePreferences, data, pref
     :param message_preferences: MessagePreferences
         existing message preferences
     :param data:
-        either individual boolean if targeting a specific preference_id and medium_id
+        either individual boolean if targeting a specific preference_id and medium_id or entire message preferences list
     :param preference_id: int, optional
     :param medium_id: int, optional
 

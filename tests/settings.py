@@ -131,6 +131,17 @@ INBOX_CONFIG = {
                 'sms': None
             },
             'message_keys': ['all_mediums_off']
+        },
+        {
+            'id': 'group_with_skip_push',
+            'label': 'Group with skip push',
+            'description': "This group has one key that won't send an app push.",
+            'preference_defaults': {
+                'app_push': True,
+                'email': True
+            },
+            'message_keys': ['group_with_skip_push', 'group_with_skip_push_2'],
+            'skip_app_push': ['group_with_skip_push_2']
         }
     ],
     'APP_PUSH_NOTIFICATION_KEY_GETTER': 'tests.models.get_notification_key',

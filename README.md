@@ -39,6 +39,10 @@ INBOX_CONFIG = {
                 'web_push': None
             },
             'message_keys': []  # List of message keys that fall into this group
+            'skip_app_push': [],  # List of message keys to skip for associated medium
+            'skip_email': [],
+            'skip_web_push': [],
+            'skip_sms': []
         }
     ],
     'APP_PUSH_NOTIFICATION_KEY_GETTER': None,  # Point to a method that gets the user and needs to return the notification key if sending push

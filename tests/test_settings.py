@@ -28,7 +28,11 @@ class SettingsTestCase(TestCase):
                         'web_push': None
                     },
                     'data': {},
-                    'message_keys': ['default']
+                    'message_keys': ['default'],
+                    'skip_app_push': [],
+                    'skip_email': [],
+                    'skip_web_push': [],
+                    'skip_sms': []
                 }
             ],
             # Callable that returns the Firebase push notification key so that a user can be sent pushes, or None
@@ -66,7 +70,11 @@ class SettingsTestCase(TestCase):
                         'web_push': None
                     },
                     'data': {},
-                    'message_keys': ['default']
+                    'message_keys': ['default'],
+                    'skip_app_push': [],
+                    'skip_email': [],
+                    'skip_web_push': [],
+                    'skip_sms': []
                 },
                 {
                     'id': 'account_updated',
@@ -81,7 +89,11 @@ class SettingsTestCase(TestCase):
                         'web_push': None
                     },
                     'data': {},
-                    'message_keys': ['new_account', 'account_updated']
+                    'message_keys': ['new_account', 'account_updated'],
+                    'skip_app_push': [],
+                    'skip_email': [],
+                    'skip_web_push': [],
+                    'skip_sms': []
                 },
                 {
                     'id': 'friend_requests',
@@ -96,7 +108,11 @@ class SettingsTestCase(TestCase):
                         'web_push': True
                     },
                     'data': {},
-                    'message_keys': ['new_friend_request', 'friend_request_accepted']
+                    'message_keys': ['new_friend_request', 'friend_request_accepted'],
+                    'skip_app_push': [],
+                    'skip_email': [],
+                    'skip_web_push': [],
+                    'skip_sms': []
                 },
                 {
                     'id': 'important_updates',
@@ -111,7 +127,11 @@ class SettingsTestCase(TestCase):
                         'web_push': None
                     },
                     'data': {},
-                    'message_keys': ['important_update']
+                    'message_keys': ['important_update'],
+                    'skip_app_push': [],
+                    'skip_email': [],
+                    'skip_web_push': [],
+                    'skip_sms': []
                 },
                 {
                     'id': 'push_only_group',
@@ -126,7 +146,11 @@ class SettingsTestCase(TestCase):
                         'web_push': None
                     },
                     'data': {},
-                    'message_keys': ['push_only']
+                    'message_keys': ['push_only'],
+                    'skip_app_push': [],
+                    'skip_email': [],
+                    'skip_web_push': [],
+                    'skip_sms': []
                 },
                 {
                     'id': 'group_with_all_mediums_off',
@@ -141,7 +165,30 @@ class SettingsTestCase(TestCase):
                         'sms': None
                     },
                     'data': {},
-                    'message_keys': ['all_mediums_off']
+                    'message_keys': ['all_mediums_off'],
+                    'skip_app_push': [],
+                    'skip_email': [],
+                    'skip_web_push': [],
+                    'skip_sms': []
+                },
+                {
+                    'id': 'group_with_skip_push',
+                    'label': 'Group with skip push',
+                    'description': "This group has one key that won't send an app push.",
+                    'is_preference': True,
+                    'use_preference': None,
+                    'preference_defaults': {
+                        'app_push': True,
+                        'email': True,
+                        'web_push': None,
+                        'sms': None
+                    },
+                    'data': {},
+                    'message_keys': ['group_with_skip_push', 'group_with_skip_push_2'],
+                    'skip_app_push': ['group_with_skip_push_2'],
+                    'skip_email': [],
+                    'skip_web_push': [],
+                    'skip_sms': []
                 }
             ],
             'APP_PUSH_NOTIFICATION_KEY_GETTER': 'tests.models.get_notification_key',

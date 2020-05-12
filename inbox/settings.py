@@ -15,7 +15,11 @@ MESSAGE_GROUP_FILL = {
         'web_push': None
     },
     'data': {},
-    'message_keys': []
+    'message_keys': [],
+    'skip_app_push': [],
+    'skip_email': [],
+    'skip_web_push': [],
+    'skip_sms': []
 }
 
 CONFIG_DEFAULTS = {

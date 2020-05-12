@@ -1,5 +1,12 @@
 # Releases
 
+### 0.3.3 (2020-05-12)
+
+Features
+
+- Add ability to skip any medium for a message key. Since the mediums sent to is determined at the message group level,
+we needed a mechanism to handle edge cases where a specific message key may want to skip over a medium.
+
 ### 0.3.2 (2020-05-12)
 
 Features
