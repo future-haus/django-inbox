@@ -1,5 +1,12 @@
 # Releases
 
+### 0.3.2 (2020-05-12)
+
+Features
+
+- Add utility method for saving messages, wraps up core of what the /users/{userId}/message_preferences endpoint
+does when saving and offers it as a utility method. `utils.save_message_preferences`
+
 ### 0.3.1 (2020-05-07)
 
 Fixes

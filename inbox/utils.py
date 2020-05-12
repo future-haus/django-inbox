@@ -4,14 +4,12 @@ from django.utils.module_loading import import_string
 
 from inbox import settings as inbox_settings
 from inbox.constants import MessageLogStatus, MessageMedium
-from inbox.models import MessageLog, Message
-
+from inbox.models import MessageLog, Message, get_default_preference_ids, MessagePreferences
 
 hooks_module = inbox_settings.get_config()['HOOKS_MODULE']
 
 
 def process_new_messages():
-
     messages = Message.objects \
                    .select_related('user') \
                    .select_for_update(skip_locked=True).filter(send_at__lte=timezone.now(),
@@ -70,7 +68,6 @@ def process_new_messages():
 
 
 def process_new_message_logs():
-
     message_logs = MessageLog.objects \
                        .select_related('message', 'message__user') \
                        .select_for_update(skip_locked=True).filter(send_at__lte=timezone.now(),
@@ -85,3 +82,40 @@ def process_new_message_logs():
                 message_log.status = MessageLogStatus.SKIPPED_FOR_PREF
 
             message_log.save()
+
+
+def save_message_preferences(message_preferences: MessagePreferences, data, preference_id: int = None,
+                             medium_id: int = None):
+    """
+
+    :param message_preferences: MessagePreferences
+        existing message preferences
+    :param data:
+        either individual boolean if targeting a specific preference_id and medium_id
+    :param preference_id: int, optional
+    :param medium_id: int, optional
+
+    :return: message_preferences: MessagePreferences
+        saved message preferences
+    """
+    if preference_id and preference_id not in get_default_preference_ids():
+        raise ValueError(
+            {'preference_id': [f'The preference_id ({preference_id}) specified in the path is invalid.']}
+        )
+    if medium_id and MessageMedium.get(medium_id.upper()) is None:
+        raise ValueError(
+            {'medium_id': [f'The medium_id ({medium_id}) specified in the path is invalid.']}
+        )
+    if preference_id and medium_id:
+
+        message_preferences = MessagePreferences.objects.select_for_update().get(pk=message_preferences.pk)
+        for k, group in enumerate(message_preferences._groups):
+            if group['id'] == preference_id:
+                message_preferences._groups[k][medium_id] = data
+                break
+    elif data:
+        message_preferences.groups = data
+
+    message_preferences.save()
+
+    return message_preferences

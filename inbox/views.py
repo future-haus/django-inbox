@@ -12,6 +12,7 @@ from inbox.constants import MessageMedium
 from inbox.models import Message, MessagePreferences, get_default_preference_ids
 from inbox.permissions import IsOwner
 from inbox.serializers import MessageSerializer, MessageListSerializer, MessageUpdateSerializer
+from inbox.utils import save_message_preferences
 
 
 class NestedMessagePreferencesMixin:
@@ -34,30 +35,18 @@ class NestedMessagePreferencesMixin:
         """
         message_preferences = self.get_object().message_preferences
 
-        is_single = False
         if self.request.method == 'PUT':
-            if preference_id and preference_id not in get_default_preference_ids():
-                raise ValidationError(
-                    {'preference_id': [f'The preference_id ({preference_id}) specified in the path is invalid.']}
+            try:
+                message_preferences = save_message_preferences(
+                    message_preferences,
+                    self.request.data if preference_id and medium_id else self.request.data.get('results'),
+                    preference_id,
+                    medium_id
                 )
-            if medium_id and MessageMedium.get(medium_id.upper()) is None:
-                raise ValidationError(
-                    {'medium_id': [f'The medium_id ({medium_id}) specified in the path is invalid.']}
-                )
-            if preference_id and medium_id:
-                is_single = True
+            except ValueError as e:
+                raise ValidationError(e.args)
 
-                message_preferences = MessagePreferences.objects.select_for_update().get(pk=message_preferences.pk)
-                for k, group in enumerate(message_preferences._groups):
-                    if group['id'] == preference_id:
-                        message_preferences._groups[k][medium_id] = self.request.data
-                        break
-            elif self.request.data.get('results'):
-                message_preferences.groups = self.request.data['results']
-
-            message_preferences.save()
-
-        if is_single:
+        if preference_id and medium_id:
             return Response(self.request.data, status=status.HTTP_200_OK)
         else:
             return Response({'results': message_preferences.groups}, status=status.HTTP_200_OK)
