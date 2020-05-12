@@ -22,9 +22,11 @@ def process_new_messages():
             # preferences when processing the logs to actually send
             mediums = [k for k, v in message._get_group_from_key()['preference_defaults'].items() if v is not None]
 
+            skipped_mediums = []
             for medium in mediums:
 
                 if message.should_skip_medium(medium):
+                    skipped_mediums.append(medium)
                     continue
 
                 medium_enum = MessageMedium.get(medium.upper())
@@ -54,6 +56,9 @@ def process_new_messages():
                 if post_message_log_save:
                     post_message_log_save(message, medium_enum, message_log)
 
+            if message.logs.count() == 0 and skipped_mediums != mediums:
+                message.is_hidden = True
+
             post_message_to_logs = None
             if hooks_module:
                 try:
@@ -61,11 +66,10 @@ def process_new_messages():
                 except (ImportError, ModuleNotFoundError) as e:
                     pass
 
+            # Perform this hook at the last moment to allow any odd cases, eg message key skips all mediums always
+            # but you still may want to hide the Message in the Inbox based on custom logic
             if post_message_to_logs:
                 message = post_message_to_logs(message)
-
-            if message.logs.count() == 0:
-                message.is_hidden = True
 
             message.is_logged = True
             message.save()

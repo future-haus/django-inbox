@@ -1,5 +1,13 @@
 # Releases
 
+### 0.3.4 (2020-05-12)
+
+Fixes
+
+- If all mediums for a message group are set to skip for a message key then `Message` was set to hide in Inbox, it 
+will now show by default. If you have all mediums to always skip for a message key and still need custom logic to
+hide the `Message` from the Inbox, then just define a `post_message_to_logs` hook for that message key.
+
 ### 0.3.3 (2020-05-12)
 
 Features

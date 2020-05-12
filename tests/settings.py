@@ -140,8 +140,9 @@ INBOX_CONFIG = {
                 'app_push': True,
                 'email': True
             },
-            'message_keys': ['group_with_skip_push', 'group_with_skip_push_2'],
-            'skip_app_push': ['group_with_skip_push_2']
+            'message_keys': ['group_with_skip_push', 'group_with_skip_push_2', 'group_with_skip_push_3'],
+            'skip_app_push': ['group_with_skip_push_2', 'group_with_skip_push_3'],
+            'skip_email': ['group_with_skip_push_3']
         }
     ],
     'APP_PUSH_NOTIFICATION_KEY_GETTER': 'tests.models.get_notification_key',

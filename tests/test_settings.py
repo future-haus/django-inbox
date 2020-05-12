@@ -184,9 +184,9 @@ class SettingsTestCase(TestCase):
                         'sms': None
                     },
                     'data': {},
-                    'message_keys': ['group_with_skip_push', 'group_with_skip_push_2'],
-                    'skip_app_push': ['group_with_skip_push_2'],
-                    'skip_email': [],
+                    'message_keys': ['group_with_skip_push', 'group_with_skip_push_2', 'group_with_skip_push_3'],
+                    'skip_app_push': ['group_with_skip_push_2', 'group_with_skip_push_3'],
+                    'skip_email': ['group_with_skip_push_3'],
                     'skip_web_push': [],
                     'skip_sms': []
                 }

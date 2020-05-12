@@ -181,7 +181,7 @@ class MessageTestCase(AppPushTestCaseMixin, TestCase):
         self.assertIsNone(message)
 
     def test_message_is_cancelled_before_sending_but_schedules_future(self):
-        Message.objects.create(user=self.user, key='new_account', fail_silently=False)
+        message = Message.objects.create(user=self.user, key='new_account', fail_silently=False)
 
         messages_count = Message.objects.count()
         self.assertEqual(messages_count, 1)
@@ -191,13 +191,15 @@ class MessageTestCase(AppPushTestCaseMixin, TestCase):
 
         message_logs_count = MessageLog.objects.count()
         messages_count = Message.objects.count()
+        message = Message.objects.get(pk=message.id)
+        self.assertTrue(message.is_hidden)
 
         self.assertEqual(message_logs_count, 0)
         self.assertEqual(messages_count, 2)
 
     def test_message_send_to_group_that_has_app_push_and_email_but_skips_app_push_on_one_key(self):
         # this message key in the group has app push and email
-        Message.objects.create(user=self.user, key='group_with_skip_push', fail_silently=False)
+        message = Message.objects.create(user=self.user, key='group_with_skip_push', fail_silently=False)
 
         messages_count = Message.objects.count()
         self.assertEqual(messages_count, 1)
@@ -207,12 +209,14 @@ class MessageTestCase(AppPushTestCaseMixin, TestCase):
 
         message_logs_count = MessageLog.objects.count()
         messages_count = Message.objects.count()
+        message = Message.objects.get(pk=message.id)
+        self.assertFalse(message.is_hidden)
 
         self.assertEqual(message_logs_count, 2)
         self.assertEqual(messages_count, 1)
 
         # this message key in the group has no app push
-        Message.objects.create(user=self.user, key='group_with_skip_push_2', fail_silently=False)
+        message = Message.objects.create(user=self.user, key='group_with_skip_push_2', fail_silently=False)
 
         messages_count = Message.objects.count()
         self.assertEqual(messages_count, 2)
@@ -222,6 +226,26 @@ class MessageTestCase(AppPushTestCaseMixin, TestCase):
 
         message_logs_count = MessageLog.objects.count()
         messages_count = Message.objects.count()
+        message = Message.objects.get(pk=message.id)
+        self.assertFalse(message.is_hidden)
 
         self.assertEqual(message_logs_count, 3)
         self.assertEqual(messages_count, 2)
+
+    def test_message_send_to_group_that_has_all_mediums_skipped_so_they_appear_only_in_inbox(self):
+        # this message key in the group has app push and email
+        message = Message.objects.create(user=self.user, key='group_with_skip_push_3', fail_silently=False)
+
+        messages_count = Message.objects.count()
+        self.assertEqual(messages_count, 1)
+
+        process_new_messages()
+        process_new_message_logs()
+
+        message = Message.objects.get(pk=message.id)
+        self.assertFalse(message.is_hidden)
+        message_logs_count = MessageLog.objects.count()
+        messages_count = Message.objects.count()
+
+        self.assertEqual(message_logs_count, 0)
+        self.assertEqual(messages_count, 1)
