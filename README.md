@@ -124,7 +124,7 @@ Templates also determine what mediums are sent to, if a template doesn't exist f
 Each template receives the following context: `user`, `data` (email and inbox also receive `data_email`) that were 
 used when creating the `Message`.
 
-#### Endpoints/Views
+#### [Endpoints/Views](#markdown-header-endpointsviews)
 
 There are some views provided for easy implementation of the library without building your own, just add them to your routing config in urls.py.
 
@@ -142,6 +142,26 @@ Example routing setup:
     users_router = router.register(r'users', UserViewSet)
     users_router.register(r'messages', MessageViewSet, basename='users_messages', parents_query_lookups=['user'])
     messages_router = router.register(r'messages', MessageViewSet, basename='messages')
+
+User message preferences mixin endpoints:
+
+* `GET /api/v1/users/{userId}/message_preferences` - Get message preferences for a `User`.
+* `PUT /api/v1/users/{userId}/message_preferences` - Update all `MessagePreferences` for a `User` at once, same 
+payload that `GET` returns.
+* `PUT /api/v1/users/{userId}/message_preferences/{messagePreferenceId}/{medium:'app_push'|'email'}` - Update 
+individual MessagePreference+medium combo, this endpoint is suggested if the implementation is saving each 
+MessagePreference individually as the `User` toggles it to avoid race conditions the whole payload endpoint would
+introduce. The payload is just a boolean `true` or `false`.
+
+Add `NestedMessagePreferencesMixin` into your `UserViewSet`:
+
+```python
+class UserViewSet(NestedMessagePreferencesMixin, mixins.RetrieveModelMixin,
+                  mixins.UpdateModelMixin, viewsets.GenericViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    ...
+```
 
 #### Usage
 
