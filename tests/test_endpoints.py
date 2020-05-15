@@ -16,16 +16,16 @@ from inbox.test.utils import AppPushTestCaseMixin
 from inbox.utils import process_new_messages, process_new_message_logs
 from tests.models import DeviceGroup
 from tests.schema import message_preferences, messages, message
-from tests.test import TestCase
+from tests.test import TestCase, TransactionTestCase
 
 User = get_user_model()
 
 
-class DeviceGroupTests(AppPushTestCaseMixin, TestCase):
+class EndpointTests(AppPushTestCaseMixin, TransactionTestCase):
     fixtures = ['users']
 
     def setUp(self):
-        super(DeviceGroupTests, self).setUp()
+        super().setUp()
 
         self.user_1 = User.objects.get(email='testuser+1@pre.haus')
 

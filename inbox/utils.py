@@ -115,7 +115,7 @@ def save_message_preferences(message_preferences: MessagePreferences, data, pref
             {'medium_id': [f'The medium_id ({medium_id}) specified in the path is invalid.']}
         )
     if preference_id and medium_id:
-           with transaction.atomic():
+        with transaction.atomic():
             message_preferences = MessagePreferences.objects.select_for_update().get(pk=message_preferences.pk)
             for k, group in enumerate(message_preferences._groups):
                 if group['id'] == preference_id:

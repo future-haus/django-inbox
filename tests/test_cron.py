@@ -1,17 +1,17 @@
 from django.contrib.auth import get_user_model
 from django.core import mail
 from faker import Faker
-from tests.test import TestCase
 
 from inbox.core import app_push
 from inbox.models import Message, MessageLog
 from inbox.test.utils import AppPushTestCaseMixin
+from tests.test import TransactionTestCase
 
 User = get_user_model()
 fake = Faker()
 
 
-class CronTestCase(AppPushTestCaseMixin, TestCase):
+class CronTestCase(AppPushTestCaseMixin, TransactionTestCase):
 
     user = None
 
