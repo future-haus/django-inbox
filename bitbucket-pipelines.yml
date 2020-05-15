@@ -11,7 +11,7 @@ pipelines:
         caches:
           - pip
         script:
-          - pip install -r requirements.txt
+          - pip install .
           - python manage.py test
         services: 
           - postgres
