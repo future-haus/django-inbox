@@ -12,7 +12,7 @@ pipelines:
           - pip
         script:
           - pip install .
-          - python manage.py test
+          - python setup.py test
         services: 
           - postgres
 
