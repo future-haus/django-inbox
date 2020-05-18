@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.core import mail
+from django.utils import timezone
 from faker import Faker
 
 from inbox.core import app_push
@@ -17,7 +18,7 @@ class CronTestCase(AppPushTestCaseMixin, TransactionTestCase):
 
     def setUp(self):
         super().setUp()
-        self.user = User.objects.create(email=fake.ascii_email)
+        self.user = User.objects.create(email=fake.ascii_email, email_verified_on=timezone.now().date())
 
     def test_cron_process_new_messages(self):
 
