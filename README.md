@@ -49,6 +49,8 @@ INBOX_CONFIG = {
     'BACKENDS': {
         'APP_PUSH': 'inbox.core.app_push.backends.firebase.AppPushBackend'
     },
+    'CHECK_IS_EMAIL_VERIFIED': True,  # Calls a method on the User being sent to verify the email is verified before sending.
+    'CHECK_IS_SMS_VERIFIED': True,  # Calls a method on the User being sent to verify the SMS number is verified before sending.
     'TESTING_MEDIUM_OUTPUT_PATH': None,  # Only set this in the testing environment, it will write final outputs for mediums being sent to.
     'DISABLE_NEW_DATA_SILENT_APP_PUSH': False,  # If you have groups with app_push and don't want the silent data push to go out, set this to True
     'MESSAGE_CREATE_FAIL_SILENTLY': True,  # Fail silently if the properties passed to Message.create() would cause an error, this is useful for not crashing in production

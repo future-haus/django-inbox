@@ -17,6 +17,7 @@ from inbox.test.utils import AppPushTestCaseMixin
 from inbox.utils import process_new_messages, process_new_message_logs
 
 User = get_user_model()
+Faker.seed()
 fake = Faker()
 
 
@@ -26,7 +27,8 @@ class MessageTestCase(AppPushTestCaseMixin, TestCase):
 
     def setUp(self):
         super().setUp()
-        self.user = User.objects.create(email=fake.ascii_email)
+        email = fake.ascii_email()
+        self.user = User.objects.create(email=email, email_verified_on=timezone.now().date(), username=email)
 
     def test_can_save_message(self):
 
@@ -138,6 +140,25 @@ class MessageTestCase(AppPushTestCaseMixin, TestCase):
 
         self.assertEqual(len(app_push.outbox), 3)
         self.assertEqual(len(mail.outbox), 1)
+
+    def test_create_message_for_unverified_user_empty_outbox(self):
+
+        email = fake.ascii_email()
+        user = User.objects.create(email=email, username=email)
+
+        self.assertEqual(MessageLog.objects.count(), 0)
+
+        message = Message.objects.create(user=user, key='default')
+
+        process_new_messages()
+        process_new_message_logs()
+
+        self.assertEqual(len(app_push.outbox), 3)
+        self.assertEqual(len(mail.outbox), 0)
+
+        message.refresh_from_db()
+
+        self.assertTrue(message.is_logged)
 
     def test_create_message_process_message_logs_user_has_push_off(self):
 

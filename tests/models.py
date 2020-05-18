@@ -5,12 +5,19 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from hashids import Hashids
 
-User = get_user_model()
+
+class User(AbstractUser):
+
+    email_verified_on = models.DateField(null=True)
+
+    @property
+    def is_email_verified(self):
+        return bool(self.email_verified_on)
 
 
 class DeviceGroup(models.Model):
 
-    user = AutoOneToOneField(User, related_name='device_group', on_delete=models.CASCADE)
+    user = AutoOneToOneField(get_user_model(), related_name='device_group', on_delete=models.CASCADE)
     notification_key = models.CharField(max_length=200, blank=True, null=True)
 
     def __str__(self):
@@ -23,5 +30,5 @@ class DeviceGroup(models.Model):
         return value
 
 
-def get_notification_key(entity: User):
+def get_notification_key(entity: get_user_model()):
     return entity.device_group.notification_key

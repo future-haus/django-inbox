@@ -1,5 +1,14 @@
 # Releases
 
+### 0.3.5 (2020-05-18)
+
+Features
+
+- Will no longer send the email or SMS if they have not been verified. This behavior is on by default and looks for
+the property `is_email_verified` and `is_sms_verified` when determining whether it `can_send` a `MessageLog`. Each of
+these mediums verification check before sending can be disabled by setting `CHECK_IS_EMAIL_VERIFIED` or 
+`CHECK_IS_SMS_VERIFIED` to `False` in the INBOX_CONFIG, they both default to `True`.
+
 ### 0.3.4 (2020-05-12)
 
 Fixes

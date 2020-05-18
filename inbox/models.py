@@ -340,6 +340,16 @@ class MessageLog(models.Model):
         user = self.message.user
         message_group = self.message.group
 
+        if self.medium == MessageMedium.EMAIL and \
+                inbox_settings.get_config()['CHECK_IS_EMAIL_VERIFIED'] and \
+                not user.is_email_verified:
+            return False
+
+        if self.medium == MessageMedium.SMS and \
+                inbox_settings.get_config()['CHECK_IS_SMS_VERIFIED'] and \
+                not user.is_sms_verified:
+            return False
+
         preference = next((g for g in user.message_preferences.groups if g['id'] == message_group['id']))
 
         if preference.get(self.medium.name.lower()):

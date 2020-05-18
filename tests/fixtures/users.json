@@ -9,9 +9,10 @@
       "last_login": "2015-09-09T22:13:12.726Z",
       "password": "md5$0RZ4r2jiEw4H$9cb61953cf456b388eb8786757df27b4",
       "email": "testuser+1@pre.haus",
-      "username": "testuser1"
+      "username": "testuser1",
+      "email_verified_on": "2015-01-01"
     },
-    "model": "auth.user",
+    "model": "tests.user",
     "pk": 1
   },
   {
@@ -26,7 +27,7 @@
       "email": "testuser+2@pre.haus",
       "username": "testuser2"
     },
-    "model": "auth.user",
+    "model": "tests.user",
     "pk": 2
   }
 ]

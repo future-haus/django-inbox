@@ -38,6 +38,7 @@ class SettingsTestCase(TestCase):
             # Callable that returns the Firebase push notification key so that a user can be sent pushes, or None
             # if one doesn't exist for the user.
             'APP_PUSH_NOTIFICATION_KEY_GETTER': None,
+            'CHECK_IS_EMAIL_VERIFIED': True,
             'BACKENDS': {
                 'APP_PUSH': 'inbox.core.app_push.backends.locmem.AppPushBackend'
             },
@@ -192,6 +193,7 @@ class SettingsTestCase(TestCase):
                 }
             ],
             'APP_PUSH_NOTIFICATION_KEY_GETTER': 'tests.models.get_notification_key',
+            'CHECK_IS_EMAIL_VERIFIED': True,
             'BACKENDS': {
                 'APP_PUSH': 'inbox.core.app_push.backends.locmem.AppPushBackend'
             },
