@@ -34,7 +34,6 @@ class AppPushBackend(BaseAppPushBackend):
             # TODO Handle failing silently if it is set to true
             self.messaging.send(message)
 
-    @property
     def notification_key(self, message: AppPushMessage):
 
         if not self._get_registration_token:
