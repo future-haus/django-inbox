@@ -43,6 +43,6 @@ class AppPushBackend(BaseAppPushBackend):
             except ImportError:
                 raise NotImplementedError('unable to load notification key getter')
 
-        notification_key = self._get_notification_key(message.entity)
+        notification_key = self._get_notification_key(message)
 
         return notification_key
