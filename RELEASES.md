@@ -1,5 +1,11 @@
 # Releases
 
+### 0.3.6 (2020-05-20)
+
+Fixes
+
+- Switches EmailMessage send to use HTML instead of text content type.
+
 ### 0.3.5 (2020-05-18)
 
 Features
