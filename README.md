@@ -45,7 +45,7 @@ INBOX_CONFIG = {
             'skip_sms': []
         }
     ],
-    'APP_PUSH_NOTIFICATION_KEY_GETTER': None,  # Point to a method that gets the user and needs to return the notification key if sending push
+    'APP_PUSH_NOTIFICATION_KEY_GETTER': None,  # Point to a method that gets the Message and needs to return the notification key if sending push
     'BACKENDS': {
         'APP_PUSH': 'inbox.core.app_push.backends.firebase.AppPushBackend'
     },

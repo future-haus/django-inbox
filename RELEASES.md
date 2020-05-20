@@ -1,5 +1,11 @@
 # Releases
 
+### 0.3.7 (2020-05-20)
+
+Fixes
+
+- Don't try to initial the Firebase Admin more than once or it'll crash, so try to get it first, then init.
+
 ### 0.3.6 (2020-05-20)
 
 Fixes

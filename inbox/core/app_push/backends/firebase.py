@@ -16,7 +16,11 @@ class AppPushBackend(BaseAppPushBackend):
     def __init__(self, fail_silently=False):
         super().__init__(fail_silently=fail_silently)
 
-        self.firebase_app = firebase_admin.initialize_app()
+        try:
+            self.firebase_app = firebase_admin.get_app()
+        except ValueError:
+            self.firebase_app = firebase_admin.initialize_app()
+
         self.messaging = firebase_admin.messaging
 
     def send_messages(self, messages: List[AppPushMessage]):
