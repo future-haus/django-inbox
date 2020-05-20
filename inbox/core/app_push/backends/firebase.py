@@ -34,10 +34,9 @@ class AppPushBackend(BaseAppPushBackend):
             # TODO Handle failing silently if it is set to true
             self.messaging.send(message)
 
-    @property
     def notification_key(self, message: AppPushMessage):
 
-        if not self._get_registration_token:
+        if not self._get_registration_key:
             try:
                 self._get_notification_key = import_string(settings.INBOX_CONFIG.APP_PUSH_NOTIFICATION_KEY_GETTER)
             except ImportError:

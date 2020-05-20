@@ -1,5 +1,11 @@
 # Releases
 
+### 0.3.8, 0.3.9 (2020-05-20)
+
+Fixes
+
+- Fix Firebase backend
+
 ### 0.3.7 (2020-05-20)
 
 Fixes
