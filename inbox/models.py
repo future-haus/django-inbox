@@ -373,7 +373,9 @@ class MessageLog(models.Model):
         subject = self._build_subject()
         body = self._build_body()
 
-        EmailMessage(subject, body, to=[self.message.user.email]).send()
+        msg = EmailMessage(subject, body, to=[self.message.user.email])
+        msg.content_subtype = "html"
+        msg.send()
 
     def _get_context_for_template(self):
         return {
