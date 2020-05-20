@@ -293,7 +293,7 @@ class Message(models.Model):
         count = Message.objects.unread_count(user_id=self.user.pk)
 
         if not inbox_settings.get_config()['DISABLE_NEW_DATA_SILENT_APP_PUSH'] and is_app_push_enabled():
-            AppPushMessage(self.user, None, None, data={'inbox_message_unread_count': count}).send()
+            AppPushMessage(self.user, None, None, data={'inbox_message_unread_count': str(count)}).send()
 
         unread_count.send(sender=self.__class__, count=count)
 

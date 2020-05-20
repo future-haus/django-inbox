@@ -30,5 +30,5 @@ class DeviceGroup(models.Model):
         return value
 
 
-def get_notification_key(entity: get_user_model()):
-    return entity.device_group.notification_key
+def get_notification_key(message):
+    return message.user.device_group.notification_key
