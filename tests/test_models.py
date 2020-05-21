@@ -290,7 +290,7 @@ class MessageTestCase(AppPushTestCaseMixin, TestCase):
         self.assertEqual(len(mail.outbox), 1)
 
         # Grab message logs with app_push, verify status and failure reaosn
-        message_logs = MessageLog.objects.filter(message__user=user)
+        message_logs = MessageLog.objects.filter(message__user=user, medium=MessageMedium.APP_PUSH)
 
         self.assertEqual(message_logs[0].status, MessageLogStatus.FAILED)
         self.assertEqual(message_logs[0].failure_reason, str(MessageLogFailureReason.MISSING_APP_PUSH_KEY))
