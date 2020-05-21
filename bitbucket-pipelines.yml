@@ -11,7 +11,7 @@ pipelines:
         caches:
           - pip
         script:
-          - echo "" >> google_creds.json
+          - echo $GOOGLE_APPLICATION_CREDENTIALS_VALUE >> google_creds.json
           - export GOOGLE_APPLICATION_CREDENTIALS=google_creds.json
           - pip install .
           - python setup.py test
