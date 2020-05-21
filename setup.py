@@ -131,5 +131,4 @@ setup(
     cmdclass={
         'upload': UploadCommand,
     },
-    extra_compile_args=['-std=c++11']
 )
