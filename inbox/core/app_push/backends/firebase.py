@@ -5,6 +5,7 @@ from django.utils.module_loading import import_string
 import firebase_admin
 import firebase_admin.messaging
 
+from inbox.constants import MessageLogStatus, MessageLogFailureReason
 from inbox.core.app_push.backends.base import BaseAppPushBackend
 from inbox.core.app_push.message import AppPushMessage
 
@@ -29,19 +30,15 @@ class AppPushBackend(BaseAppPushBackend):
             message = self.messaging.Message(
                 notification=self.messaging.Notification(title=message.title, body=message.body),
                 data=message.data,
-                token=self.notification_key(message),
+                token=self.entity.notification_key,
             )
+
             # TODO Handle failing silently if it is set to true
-            self.messaging.send(message)
-
-    def notification_key(self, message: AppPushMessage):
-
-        if not self._get_notification_key:
             try:
-                self._get_notification_key = import_string(settings.INBOX_CONFIG['APP_PUSH_NOTIFICATION_KEY_GETTER'])
-            except ImportError:
-                raise NotImplementedError('unable to load notification key getter')
-
-        notification_key = self._get_notification_key(message)
-
-        return notification_key
+                self.messaging.send(message)
+            except firebase_admin.UnregisteredError:
+                if message.message_log:
+                    message.message_log.status = MessageLogStatus.FAILED
+                    message.message_log.failure_reason = MessageLogFailureReason.INVALID_APP_PUSH_KEY
+                    message.message_log.save()
+                self.entity.clear_notification_key()

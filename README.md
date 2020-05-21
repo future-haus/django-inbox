@@ -45,7 +45,6 @@ INBOX_CONFIG = {
             'skip_sms': []
         }
     ],
-    'APP_PUSH_NOTIFICATION_KEY_GETTER': None,  # Point to a method that gets the Message and needs to return the notification key if sending push
     'BACKENDS': {
         'APP_PUSH': 'inbox.core.app_push.backends.firebase.AppPushBackend'
     },
@@ -79,6 +78,12 @@ INBOX_CONFIG = {
 ```
 
 4. Run `python manage.py migrate` to create the inbox models.
+
+There are a few property getters that are required to be on your `User` depending on the mediums in use:
+
+- app_push: `notification_key`
+- email: `is_email_verified`
+- sms: `is_sms_verified`
 
 Concepts
 ========

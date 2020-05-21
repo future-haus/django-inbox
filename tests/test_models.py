@@ -9,7 +9,7 @@ from django.utils import timezone
 from faker import Faker
 from inbox import settings as inbox_settings
 from inbox import signals
-from inbox.constants import MessageLogStatus
+from inbox.constants import MessageLogStatus, MessageLogFailureReason
 from inbox.core import app_push
 
 from inbox.models import Message, get_message_group_default, MessageMedium, MessageLog
@@ -29,6 +29,8 @@ class MessageTestCase(AppPushTestCaseMixin, TestCase):
         super().setUp()
         email = fake.ascii_email()
         self.user = User.objects.create(email=email, email_verified_on=timezone.now().date(), username=email)
+        self.user.device_group.notification_key = 'fake-notification_key'
+        self.user.device_group.save()
 
     def test_can_save_message(self):
 
@@ -145,6 +147,8 @@ class MessageTestCase(AppPushTestCaseMixin, TestCase):
 
         email = fake.ascii_email()
         user = User.objects.create(email=email, username=email)
+        user.device_group.notification_key = 'fake-notification_key'
+        user.device_group.save()
 
         self.assertEqual(MessageLog.objects.count(), 0)
 
@@ -270,3 +274,23 @@ class MessageTestCase(AppPushTestCaseMixin, TestCase):
 
         self.assertEqual(message_logs_count, 0)
         self.assertEqual(messages_count, 1)
+
+    def test_create_message_user_without_app_push_notification_key(self):
+        email = fake.ascii_email()
+        user = User.objects.create(email=email, email_verified_on=timezone.now().date(), username=email)
+
+        self.assertEqual(MessageLog.objects.count(), 0)
+
+        Message.objects.create(user=user, key='default')
+
+        process_new_messages()
+        process_new_message_logs()
+
+        self.assertEqual(len(app_push.outbox), 2)
+        self.assertEqual(len(mail.outbox), 1)
+
+        # Grab message logs with app_push, verify status and failure reaosn
+        message_logs = MessageLog.objects.filter(message__user=user)
+
+        self.assertEqual(message_logs[0].status, MessageLogStatus.FAILED)
+        self.assertEqual(message_logs[0].failure_reason, MessageLogFailureReason.MISSING_APP_PUSH_KEY)
