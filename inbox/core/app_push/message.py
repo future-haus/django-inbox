@@ -5,11 +5,14 @@ User = get_user_model()
 
 class AppPushMessage:
 
-    def __init__(self, entity: User, title=None, body=None, data=None, connection=None):
+    message_log = None
+
+    def __init__(self, entity: User, title=None, body=None, data=None, message_log=None, connection=None):
         self.entity = entity
         self.title = title
         self.body = body
         self.data = data or {}
+        self.message_log = message_log
         self.connection = connection
 
     def get_connection(self, fail_silently=False):

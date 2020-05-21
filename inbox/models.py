@@ -332,7 +332,7 @@ class MessageLog(models.Model):
     medium = enum.EnumField(MessageMedium)
     send_at = models.DateTimeField(db_index=True)  # This is from the parent Message
     status = enum.EnumField(MessageLogStatus, default=MessageLogStatus.NEW)
-    failure_reason = enum.EnumField(MessageLogFailureReason, default=None, null=True)
+    failure_reason = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='Created')
 
     @property
@@ -340,20 +340,30 @@ class MessageLog(models.Model):
         user = self.message.user
         message_group = self.message.group
 
-        if self.medium == MessageMedium.EMAIL and \
-                inbox_settings.get_config()['CHECK_IS_EMAIL_VERIFIED'] and \
-                not user.is_email_verified:
-            return False
+        if self.medium == MessageMedium.APP_PUSH:
+            if not user.notification_key:
+                self.status = MessageLogStatus.FAILED
+                self.failure_reason = MessageLogFailureReason.MISSING_APP_PUSH_KEY
+                return False
 
-        if self.medium == MessageMedium.SMS and \
-                inbox_settings.get_config()['CHECK_IS_SMS_VERIFIED'] and \
-                not user.is_sms_verified:
-            return False
+        if self.medium == MessageMedium.EMAIL:
+            if inbox_settings.get_config()['CHECK_IS_EMAIL_VERIFIED'] and not user.is_email_verified:
+                self.status = MessageLogStatus.FAILED
+                self.failure_reason = MessageLogFailureReason.EMAIL_NOT_VERIFIED
+                return False
+
+        if self.medium == MessageMedium.SMS:
+            if inbox_settings.get_config()['CHECK_IS_SMS_VERIFIED'] and not user.is_sms_verified:
+                self.status = MessageLogStatus.FAILED
+                self.failure_reason = MessageLogFailureReason.SMS_NOT_VERIFIED
+                return False
 
         preference = next((g for g in user.message_preferences.groups if g['id'] == message_group['id']))
 
         if preference.get(self.medium.name.lower()):
             return True
+        else:
+            self.status = MessageLogStatus.SKIPPED_FOR_PREF
 
         return False
 
@@ -367,7 +377,7 @@ class MessageLog(models.Model):
         subject = self._build_subject()
         body = self._build_body()
 
-        AppPushMessage(self.message.user, subject, body, data=self.message.data).send()
+        AppPushMessage(self.message.user, subject, body, data=self.message.data, message_log=self).send()
 
     def send_email(self):
         subject = self._build_subject()

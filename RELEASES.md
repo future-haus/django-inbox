@@ -1,12 +1,14 @@
 # Releases
 
-### 0.3.13 (2020-05-20)
+### 0.3.16 (2020-05-20)
 
 Fixes
 
 - Fix Firebase backend
 - Don't try to initial the Firebase Admin more than once or it'll crash, so try to get it first, then init.
 - Switches EmailMessage send to use HTML instead of text content type.
+- Handle error cases thrown by FCM
+- Schema check on Message.data field so that it's a dictionary with key-value only and strings for values only
 
 ### 0.3.5 (2020-05-18)
 

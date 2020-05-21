@@ -17,6 +17,14 @@
   },
   {
     "fields": {
+      "user": 1,
+      "notification_key": "fake-notification_key"
+    },
+    "model": "tests.devicegroup",
+    "pk": 1
+  },
+  {
+    "fields": {
       "first_name": "Test 2",
       "is_staff": true,
       "is_active": true,

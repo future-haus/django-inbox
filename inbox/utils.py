@@ -86,8 +86,6 @@ def process_new_message_logs():
             if message_log.can_send:
                 message_log.status = MessageLogStatus.SENT
                 message_log.send()
-            else:
-                message_log.status = MessageLogStatus.SKIPPED_FOR_PREF
 
             message_log.save()
 

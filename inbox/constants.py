@@ -35,10 +35,16 @@ class MessageLogStatus(enum.Enum):
 
 class MessageLogFailureReason(enum.Enum):
 
-    MISSING_TEMPLATE = 1
-    INVALID_APP_PUSH_KEY = 2
+    MISSING_TEMPLATE = 101
+    MISSING_APP_PUSH_KEY = 102
+
+    EMAIL_NOT_VERIFIED = 201
+    SMS_NOT_VERIFIED = 202
 
     __labels__ = {
         MISSING_TEMPLATE: 'Missing template',
-        INVALID_APP_PUSH_KEY: 'Invalid push key',
+        MISSING_APP_PUSH_KEY: 'Missing App Push Key',
+
+        EMAIL_NOT_VERIFIED: 'Email is not verified',
+        SMS_NOT_VERIFIED: 'SMS is not verified'
     }

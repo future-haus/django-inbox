@@ -14,6 +14,14 @@ class User(AbstractUser):
     def is_email_verified(self):
         return bool(self.email_verified_on)
 
+    @property
+    def notification_key(self):
+        return self.device_group.notification_key
+
+    def clear_notification_key(self):
+        self.device_group.notification_key = None
+        self.device_group.save()
+
 
 class DeviceGroup(models.Model):
 
