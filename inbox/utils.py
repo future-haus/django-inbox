@@ -20,7 +20,7 @@ def process_new_messages():
     process_messages(messages)
 
 
-def process_messages(messages, process_message_logs=False):
+def process_messages(messages):
 
     with transaction.atomic():
         for message in messages:
