@@ -1,7 +1,9 @@
-from datetime import timedelta
 from typing import List
 
-from inbox.constants import MessageLogStatus, MessageLogFailureReason
+from firebase_admin._messaging_utils import UnregisteredError, ThirdPartyAuthError, SenderIdMismatchError, \
+    QuotaExceededError
+
+from inbox.constants import MessageLogStatus
 from inbox.core.app_push.backends.base import BaseAppPushBackend
 from inbox.core.app_push.message import AppPushMessage
 import firebase_admin.messaging
@@ -43,15 +45,15 @@ class AppPushBackend(BaseAppPushBackend):
             # TODO Handle failing silently if it is set to true
             try:
                 self.messaging.send(fcm_message, dry_run=self.dry_run)
-            except firebase_admin.messaging.UnregisteredError as msg:
+            except UnregisteredError as msg:
                 if message.message_log:
                     message.message_log.status = MessageLogStatus.FAILED
                     message.message_log.failure_reason = str(msg)
                     message.message_log.save()
                 message.entity.clear_notification_key()
-            except (firebase_admin.messaging.QuotaExceededError,
-                    firebase_admin.messaging.SenderIdMismatchError,
-                    firebase_admin.messaging.ThirdPartyAuthError) as msg:
+            except (QuotaExceededError,
+                    SenderIdMismatchError,
+                    ThirdPartyAuthError) as msg:
                 if message.message_log:
                     message.message_log.status = MessageLogStatus.FAILED
                     message.message_log.failure_reason = str(msg)
