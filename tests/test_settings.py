@@ -39,7 +39,10 @@ class SettingsTestCase(TestCase):
             # if one doesn't exist for the user.
             'CHECK_IS_EMAIL_VERIFIED': True,
             'BACKENDS': {
-                'APP_PUSH': 'inbox.core.app_push.backends.locmem.AppPushBackend'
+                'APP_PUSH': 'inbox.core.app_push.backends.locmem.AppPushBackend',
+                'APP_PUSH_CONFIG': {
+                    'GOOGLE_FCM_SERVER_KEY': 'abc'
+                }
             },
             'TESTING_MEDIUM_OUTPUT_PATH': None,
             'DISABLE_NEW_DATA_SILENT_APP_PUSH': False,
@@ -195,7 +198,10 @@ class SettingsTestCase(TestCase):
             ],
             'CHECK_IS_EMAIL_VERIFIED': True,
             'BACKENDS': {
-                'APP_PUSH': 'inbox.core.app_push.backends.locmem.AppPushBackend'
+                'APP_PUSH': 'inbox.core.app_push.backends.locmem.AppPushBackend',
+                'APP_PUSH_CONFIG': {
+                    'GOOGLE_FCM_SERVER_KEY': 'abc'
+                }
             },
             'TESTING_MEDIUM_OUTPUT_PATH': None,
             'DISABLE_NEW_DATA_SILENT_APP_PUSH': False,

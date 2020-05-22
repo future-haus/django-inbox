@@ -1,13 +1,13 @@
+import json
 from typing import List
 import logging
 
-from firebase_admin._messaging_utils import UnregisteredError, ThirdPartyAuthError, SenderIdMismatchError, \
-    QuotaExceededError
+from django.conf import settings
 
 from inbox.constants import MessageLogStatus
 from inbox.core.app_push.backends.base import BaseAppPushBackend
 from inbox.core.app_push.message import AppPushMessage
-import firebase_admin.messaging
+from pyfcm import FCMNotification
 
 logger = logging.getLogger(__name__)
 
@@ -22,12 +22,9 @@ class AppPushBackend(BaseAppPushBackend):
 
         self.dry_run = dry_run
 
-        try:
-            self.firebase_app = firebase_admin.get_app()
-        except ValueError:
-            self.firebase_app = firebase_admin.initialize_app()
-
-        self.messaging = firebase_admin.messaging
+        self.fcm = FCMNotification(
+            api_key=settings.INBOX_CONFIG['BACKENDS']['APP_PUSH_CONFIG']['GOOGLE_FCM_SENDER_KEY']
+        )
 
     def send_messages(self, messages: List[AppPushMessage]):
 
@@ -39,26 +36,38 @@ class AppPushBackend(BaseAppPushBackend):
             if message.data is not None and isinstance(message.data, dict):
                 data = {k: str(v) for k, v in message.data.items()}
 
-            fcm_message = self.messaging.Message(
-                notification=self.messaging.Notification(title=message.title, body=message.body),
-                data=data,
-                token=message.entity.notification_key
-            )
-
-            # TODO Handle failing silently if it is set to true
             try:
-                resp = self.messaging.send(fcm_message, dry_run=self.dry_run)
-                logger.info(resp)
-            except UnregisteredError as msg:
+                content_available = message.title is None and message.body is None
+                response = self.fcm.notify_single_device(registration_id=message.entity.notification_key,
+                                                         message_title=message.title,
+                                                         message_body=message.body,
+                                                         data_message=data,
+                                                         content_available=content_available)
+            except Exception as msg:
                 if message.message_log:
                     message.message_log.status = MessageLogStatus.FAILED
                     message.message_log.failure_reason = str(msg)
+                    logger.warning('Exception when calling notify_single_device for {}'.format(
+                        message.entity.notification_key
+                    ))
+                    logger.warning(msg)
                     message.message_log.save()
-                message.entity.clear_notification_key()
-            except (QuotaExceededError,
-                    SenderIdMismatchError,
-                    ThirdPartyAuthError) as msg:
-                if message.message_log:
-                    message.message_log.status = MessageLogStatus.FAILED
-                    message.message_log.failure_reason = str(msg)
-                    message.message_log.save()
+
+            if response['failure'] > 0:
+                if 'failed_registration_ids' in response:
+                    failed_registration_ids = []
+                    for registration_id in response['failed_registration_ids']:
+                        failed_registration_ids.append(registration_id)
+
+                    msg = ', '.join(failed_registration_ids)
+                    logger.warning('Failed registration IDs: {}'.format(msg))
+                else:
+                    errors = []
+                    for result in response['results']:
+                        errors.append(result['error'])
+
+                    msg = "\n".join(errors)
+                    logger.warning('FCM failure: {}'.format(msg))
+            else:
+                logger.info('FCM success')
+                logger.info(json.dumps(response))

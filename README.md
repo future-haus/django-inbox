@@ -46,7 +46,10 @@ INBOX_CONFIG = {
         }
     ],
     'BACKENDS': {
-        'APP_PUSH': 'inbox.core.app_push.backends.firebase.AppPushBackend'
+        'APP_PUSH': 'inbox.core.app_push.backends.firebase.AppPushBackend',
+        'APP_PUSH_CONFIG': {  # Config specific to the app push backend being used
+            'GOOGLE_FCM_SERVER_KEY': 'abc'
+        }
     },
     'CHECK_IS_EMAIL_VERIFIED': True,  # Calls a method on the User being sent to verify the email is verified before sending.
     'CHECK_IS_SMS_VERIFIED': True,  # Calls a method on the User being sent to verify the SMS number is verified before sending.
