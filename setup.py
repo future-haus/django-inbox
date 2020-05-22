@@ -17,15 +17,15 @@ URL = 'http://www.futurehaus.com/'
 EMAIL = 'jt@futurehaus.com'
 AUTHOR = 'Josh Turmel'
 REQUIRES_PYTHON = '>=3.7'
-VERSION = '0.3.20'
+VERSION = '0.3.23'
 
 REQUIRED = [
     'django>=2.2', 'django-annoying', 'django_enumfield>=2.0.0', 'djangorestframework', 'jsonschema', 'drf-extensions',
-    'toolz', 'psycopg2-binary',
+    'toolz', 'psycopg2-binary'
 ]
 
 EXTRAS = {
-    'app_push_firebase': ['firebase-admin']
+    'app_push_firebase': ['pyfcm==1.4.7']
 }
 
 TESTS_REQUIRE = [

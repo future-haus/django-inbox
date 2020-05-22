@@ -146,7 +146,10 @@ INBOX_CONFIG = {
         }
     ],
     'BACKENDS': {
-        'APP_PUSH': 'inbox.core.app_push.backends.locmem.AppPushBackend'
+        'APP_PUSH': 'inbox.core.app_push.backends.locmem.AppPushBackend',
+        'APP_PUSH_CONFIG': {
+            'GOOGLE_FCM_SERVER_KEY': 'abc'
+        }
     },
     'TESTING_MEDIUM_OUTPUT_PATH': None,
     'HOOKS_MODULE': 'tests.hooks'
