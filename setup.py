@@ -30,7 +30,7 @@ EXTRAS = {
 
 TESTS_REQUIRE = [
     'coverage', 'Faker', 'django-annoying', 'responses', 'djangorestframework-simplejwt', 'hashids==1.2.0',
-    'freezegun', 'twine', 'beautifultable'
+    'freezegun', 'twine', 'beautifultable', 'pyfcm==1.4.7'
 ]
 
 # The rest you shouldn't have to touch too much :)
