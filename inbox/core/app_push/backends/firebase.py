@@ -23,7 +23,7 @@ class AppPushBackend(BaseAppPushBackend):
         self.dry_run = dry_run
 
         self.fcm = FCMNotification(
-            api_key=settings.INBOX_CONFIG['BACKENDS']['APP_PUSH_CONFIG']['GOOGLE_FCM_SENDER_KEY']
+            api_key=settings.INBOX_CONFIG['BACKENDS']['APP_PUSH_CONFIG']['GOOGLE_FCM_SERVER_KEY']
         )
 
     def send_messages(self, messages: List[AppPushMessage]):
@@ -47,11 +47,13 @@ class AppPushBackend(BaseAppPushBackend):
                 if message.message_log:
                     message.message_log.status = MessageLogStatus.FAILED
                     message.message_log.failure_reason = str(msg)
-                    logger.warning('Exception when calling notify_single_device for {}'.format(
-                        message.entity.notification_key
-                    ))
-                    logger.warning(msg)
                     message.message_log.save()
+                logger.warning(msg)
+                logger.warning('Exception when calling notify_single_device for {}'.format(
+                    message.entity.notification_key
+                ))
+
+            logger.info(json.dumps(response))
 
             if response['failure'] > 0:
                 if 'failed_registration_ids' in response:

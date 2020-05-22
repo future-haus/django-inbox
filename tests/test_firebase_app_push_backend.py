@@ -105,8 +105,7 @@ class FirebaseAppPushBackendTestCase(AppPushTestCaseMixin, TransactionTestCase):
         inbox_settings.get_config.cache_clear()
         INBOX_CONFIG = settings.INBOX_CONFIG.copy()
         INBOX_CONFIG['BACKENDS']['APP_PUSH_CONFIG'] = {
-            'GOOGLE_FCM_SENDER_ID': 'abc',
-            'GOOGLE_FCM_SENDER_KEY': 'abc'
+            'GOOGLE_FCM_SERVER_KEY': 'abc'
         }
         with self.settings(INBOX_CONFIG=INBOX_CONFIG):
             connection = app_push.get_connection('inbox.core.app_push.backends.firebase.AppPushBackend', dry_run=True)
