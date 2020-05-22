@@ -44,7 +44,9 @@ class SettingsTestCase(TestCase):
             'TESTING_MEDIUM_OUTPUT_PATH': None,
             'DISABLE_NEW_DATA_SILENT_APP_PUSH': False,
             'MESSAGE_CREATE_FAIL_SILENTLY': True,
-            'HOOKS_MODULE': None
+            'HOOKS_MODULE': None,
+            'PROCESS_NEW_MESSAGES_LIMIT': 25,
+            'PROCESS_NEW_MESSAGE_LOGS_LIMIT': 25
         }
 
         with self.settings(INBOX_CONFIG={}):
@@ -198,7 +200,9 @@ class SettingsTestCase(TestCase):
             'TESTING_MEDIUM_OUTPUT_PATH': None,
             'DISABLE_NEW_DATA_SILENT_APP_PUSH': False,
             'MESSAGE_CREATE_FAIL_SILENTLY': True,
-            'HOOKS_MODULE': 'tests.hooks'
+            'HOOKS_MODULE': 'tests.hooks',
+            'PROCESS_NEW_MESSAGES_LIMIT': 25,
+            'PROCESS_NEW_MESSAGE_LOGS_LIMIT': 25
         }
 
         inbox_settings.get_config.cache_clear()

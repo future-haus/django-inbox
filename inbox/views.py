@@ -1,5 +1,5 @@
 from django.utils import timezone
-from rest_framework import viewsets, status
+from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.mixins import RetrieveModelMixin, DestroyModelMixin, ListModelMixin, UpdateModelMixin
@@ -8,8 +8,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 from rest_framework_extensions.mixins import NestedViewSetMixin
 
-from inbox.constants import MessageMedium
-from inbox.models import Message, MessagePreferences, get_default_preference_ids
+from inbox.models import Message
 from inbox.permissions import IsOwner
 from inbox.serializers import MessageSerializer, MessageListSerializer, MessageUpdateSerializer
 from inbox.utils import save_message_preferences

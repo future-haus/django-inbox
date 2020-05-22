@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from inbox import settings as inbox_settings
-from inbox.models import Message, get_message_group
+from inbox.models import Message
 
 MESSAGE_GROUPS = inbox_settings.get_config()['MESSAGE_GROUPS']
 

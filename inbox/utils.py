@@ -10,10 +10,12 @@ hooks_module = inbox_settings.get_config()['HOOKS_MODULE']
 
 
 def process_new_messages():
+    limit = int(inbox_settings.get_config()['PROCESS_NEW_MESSAGES_LIMIT'])
+
     messages = Message.objects \
                    .select_related('user') \
                    .select_for_update(skip_locked=True).filter(send_at__lte=timezone.now(),
-                                                               is_logged=False)[:25]
+                                                               is_logged=False)[:limit]
 
     with transaction.atomic():
         for message in messages:
@@ -76,10 +78,12 @@ def process_new_messages():
 
 
 def process_new_message_logs():
+    limit = int(inbox_settings.get_config()['PROCESS_NEW_MESSAGE_LOGS_LIMIT'])
+
     message_logs = MessageLog.objects \
                        .select_related('message', 'message__user') \
                        .select_for_update(skip_locked=True).filter(send_at__lte=timezone.now(),
-                                                                   status=MessageLogStatus.NEW)[:25]
+                                                                   status=MessageLogStatus.NEW)[:limit]
 
     with transaction.atomic():
         for message_log in message_logs:
