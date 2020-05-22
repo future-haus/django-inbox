@@ -1,16 +1,19 @@
 import os
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from faker import Faker
+from tests.test import TransactionTestCase
+import responses
+
+from inbox import settings as inbox_settings
 from inbox.constants import MessageLogStatus
 from inbox.core import app_push
 from inbox.core.app_push import AppPushMessage
 from inbox.models import Message
 from inbox.test.utils import AppPushTestCaseMixin
 from inbox.utils import process_new_messages, process_new_message_logs
-from tests.test import TransactionTestCase
-import responses
 
 User = get_user_model()
 fake = Faker()
@@ -107,3 +110,25 @@ class FirebaseAppPushBackendTestCase(AppPushTestCaseMixin, TransactionTestCase):
 
         AppPushMessage(self.user, 'Test Subject', 'Test Body', data={'foo': 'bar', 'foo2': {}}, connection=connection,
                        message_log=message_log).send()
+
+    # @responses.activate
+    # def test_save_message_process_for_push(self):
+    #
+    #     # We use lru_cache on INBOX_CONFIG, clear it out
+    #     inbox_settings.get_config.cache_clear()
+    #     # Then override the INBOX_CONFIG setting, we'll add a new message group and see it we get the expected return
+    #     INBOX_CONFIG = settings.INBOX_CONFIG.copy()
+    #     INBOX_CONFIG['BACKENDS']['APP_PUSH'] = 'inbox.core.app_push.backends.firebase.AppPushBackend'
+    #     with self.settings(INBOX_CONFIG=INBOX_CONFIG):
+    #         Message.objects.create(user=self.user, key='default')
+    #
+    #         responses.add(responses.POST, 'https://oauth2.googleapis.com/token',
+    #                       json={'access_token': '0987654321poiuytrewq'})
+    #
+    #         responses.add(responses.POST, 'https://fcm.googleapis.com/v1/projects/future-haus/messages:send',
+    #                       json={'name': 'projects/future-haus/messages/0:1500415314455276%31bd1c9631bd1c96'})
+    #
+    #         process_new_messages()
+    #
+    #     inbox_settings.get_config().cache_clear()
+    #

@@ -1,4 +1,5 @@
 from typing import List
+import logging
 
 from firebase_admin._messaging_utils import UnregisteredError, ThirdPartyAuthError, SenderIdMismatchError, \
     QuotaExceededError
@@ -7,6 +8,8 @@ from inbox.constants import MessageLogStatus
 from inbox.core.app_push.backends.base import BaseAppPushBackend
 from inbox.core.app_push.message import AppPushMessage
 import firebase_admin.messaging
+
+logger = logging.getLogger(__name__)
 
 
 class AppPushBackend(BaseAppPushBackend):
@@ -44,7 +47,8 @@ class AppPushBackend(BaseAppPushBackend):
 
             # TODO Handle failing silently if it is set to true
             try:
-                self.messaging.send(fcm_message, dry_run=self.dry_run)
+                resp = self.messaging.send(fcm_message, dry_run=self.dry_run)
+                logger.info(resp)
             except UnregisteredError as msg:
                 if message.message_log:
                     message.message_log.status = MessageLogStatus.FAILED

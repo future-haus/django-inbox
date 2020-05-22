@@ -17,6 +17,11 @@ def process_new_messages():
                    .select_for_update(skip_locked=True).filter(send_at__lte=timezone.now(),
                                                                is_logged=False)[:limit]
 
+    process_messages(messages)
+
+
+def process_messages(messages, process_message_logs=False):
+
     with transaction.atomic():
         for message in messages:
 
@@ -84,7 +89,10 @@ def process_new_message_logs():
                        .select_related('message', 'message__user') \
                        .select_for_update(skip_locked=True).filter(send_at__lte=timezone.now(),
                                                                    status=MessageLogStatus.NEW)[:limit]
+    process_message_logs(message_logs)
 
+
+def process_message_logs(message_logs):
     with transaction.atomic():
         for message_log in message_logs:
             if message_log.can_send:

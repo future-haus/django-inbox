@@ -12,7 +12,7 @@ from inbox import signals
 from inbox.constants import MessageLogStatus, MessageLogFailureReason
 from inbox.core import app_push
 
-from inbox.models import Message, get_message_group_default, MessageMedium, MessageLog
+from inbox.models import Message, MessageMedium, MessageLog
 from inbox.test.utils import AppPushTestCaseMixin
 from inbox.utils import process_new_messages, process_new_message_logs
 
@@ -289,8 +289,9 @@ class MessageTestCase(AppPushTestCaseMixin, TestCase):
         self.assertEqual(len(app_push.outbox), 2)
         self.assertEqual(len(mail.outbox), 1)
 
-        # Grab message logs with app_push, verify status and failure reaosn
+        # Grab message logs with app_push, verify status and failure reason
         message_logs = MessageLog.objects.filter(message__user=user, medium=MessageMedium.APP_PUSH)
 
         self.assertEqual(message_logs[0].status, MessageLogStatus.FAILED)
         self.assertEqual(message_logs[0].failure_reason, str(MessageLogFailureReason.MISSING_APP_PUSH_KEY))
+
