@@ -3,8 +3,6 @@ from typing import List
 import logging
 
 from django.conf import settings
-from firebase_admin._messaging_utils import UnregisteredError, ThirdPartyAuthError, SenderIdMismatchError, \
-    QuotaExceededError
 
 from inbox.constants import MessageLogStatus
 from inbox.core.app_push.backends.base import BaseAppPushBackend
