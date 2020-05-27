@@ -35,6 +35,9 @@ class HTTPStatusTestCaseMixin(object):
     def assertHTTP404(self, response):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
+    def assertHTTP405(self, response):
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
 
 class ClientHelperMixin(object):
 

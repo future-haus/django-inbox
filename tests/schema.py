@@ -69,3 +69,7 @@ messages = {
     },
     "minItems": 0
 }
+
+unread_count = {
+    "type": "integer"
+}

@@ -15,7 +15,7 @@ from inbox.models import Message, MessageLog, get_message_groups, get_message_gr
 from inbox.test.utils import AppPushTestCaseMixin
 from inbox.utils import process_new_messages, process_new_message_logs
 from tests.models import DeviceGroup
-from tests.schema import message_preferences, messages, message
+from tests.schema import message_preferences, messages, message, unread_count
 from tests.test import TestCase, TransactionTestCase
 
 User = get_user_model()
@@ -504,3 +504,74 @@ class EndpointTests(AppPushTestCaseMixin, TransactionTestCase):
         self.assertTrue(message.is_hidden)
         self.assertTrue(message.is_logged)
 
+    def test_fetching_unread_count(self):
+
+        user_id = 1
+        user = User.objects.get(pk=user_id)
+
+        response = self.get(f'/api/v1/users/{user_id}/messages/unread_count')
+        self.assertHTTP401(response)
+
+        self.client.force_login(user)
+
+        handler = MagicMock()
+        signals.unread_count.connect(handler, sender=Message)
+
+        response = self.get(f'/api/v1/users/{user_id}/messages/unread_count')
+
+        self.assertHTTP200(response)
+        self.assertEqual(response.data, 0)
+
+        response = self.patch(f'/api/v1/users/{user_id}', {'first_name': 'Test'})
+        self.assertHTTP200(response)
+
+        response = self.get(f'/api/v1/users/{user_id}/messages/unread_count')
+
+        self.assertHTTP200(response)
+        self.assertEqual(response.data, 1)
+        self.validate(response.data, unread_count)
+
+    def test_fetching_unread_count_different_user(self):
+        user_id_1 = 1
+        user = User.objects.get(pk=user_id_1)
+        self.client.force_login(user)
+
+        response = self.patch(f'/api/v1/users/{user_id_1}', {'first_name': 'Test'})
+        self.assertHTTP200(response)
+
+        self.client.logout()
+
+        user_id_2 = 2
+        user = User.objects.get(pk=user_id_2)
+        self.client.force_login(user)
+
+        response = self.get(f'/api/v1/users/{user_id_1}/messages/unread_count')
+
+        self.assertHTTP403(response)
+
+    def test_updating_unread_count(self):
+        user_id_1 = 1
+        user = User.objects.get(pk=user_id_1)
+        self.client.force_login(user)
+
+        response = self.put(f'/api/v1/users/{user_id_1}/messages/unread_count', {})
+
+        self.assertHTTP405(response)
+
+    def test_deleting_unread_count(self):
+        user_id_1 = 1
+        user = User.objects.get(pk=user_id_1)
+        self.client.force_login(user)
+
+        response = self.delete(f'/api/v1/users/{user_id_1}/messages/unread_count')
+
+        self.assertHTTP405(response)
+
+    def test_creating_unread_count(self):
+        user_id_1 = 1
+        user = User.objects.get(pk=user_id_1)
+        self.client.force_login(user)
+
+        response = self.post(f'/api/v1/users/{user_id_1}/messages/unread_count', {})
+
+        self.assertHTTP405(response)

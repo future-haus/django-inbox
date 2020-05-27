@@ -1,6 +1,12 @@
 # Releases
 
-### 0.3.16 (2020-05-20)
+#### 0.3.25 (2020-05-27)
+
+Features
+
+- Add endpoint to fetch the current unread count for a `User`.
+
+#### 0.3.16 (2020-05-20)
 
 Fixes
 
@@ -10,7 +16,7 @@ Fixes
 - Handle error cases thrown by FCM
 - Schema check on Message.data field so that it's a dictionary with key-value only and strings for values only
 
-### 0.3.5 (2020-05-18)
+#### 0.3.5 (2020-05-18)
 
 Features
 
@@ -19,7 +25,7 @@ the property `is_email_verified` and `is_sms_verified` when determining whether 
 these mediums verification check before sending can be disabled by setting `CHECK_IS_EMAIL_VERIFIED` or 
 `CHECK_IS_SMS_VERIFIED` to `False` in the INBOX_CONFIG, they both default to `True`.
 
-### 0.3.4 (2020-05-12)
+#### 0.3.4 (2020-05-12)
 
 Fixes
 
@@ -27,28 +33,28 @@ Fixes
 will now show by default. If you have all mediums to always skip for a message key and still need custom logic to
 hide the `Message` from the Inbox, then just define a `post_message_to_logs` hook for that message key.
 
-### 0.3.3 (2020-05-12)
+#### 0.3.3 (2020-05-12)
 
 Features
 
 - Add ability to skip any medium for a message key. Since the mediums sent to is determined at the message group level,
 we needed a mechanism to handle edge cases where a specific message key may want to skip over a medium.
 
-### 0.3.2 (2020-05-12)
+#### 0.3.2 (2020-05-12)
 
 Features
 
 - Add utility method for saving messages, wraps up core of what the /users/{userId}/message_preferences endpoint
 does when saving and offers it as a utility method. `utils.save_message_preferences`
 
-### 0.3.1 (2020-05-07)
+#### 0.3.1 (2020-05-07)
 
 Fixes
 
 - Fix issue with `inbox_status` management command where it was using the group id instead of the message keys to find
 templates.
 
-### 0.3.0 (2020-05-06)
+#### 0.3.0 (2020-05-06)
 
 Features
 
@@ -60,7 +66,7 @@ Fixes
 - If a `Message` never generates a `MessageLog` because they are cancelled, etc then the `Message` should not show up 
 in the Inbox.
 
-### 0.2.6 (2020-05-06)
+#### 0.2.6 (2020-05-06)
 
 Features
 
@@ -78,7 +84,7 @@ HTML context.
 
 ---
 
-### 0.2.5 (2020-05-05)
+#### 0.2.5 (2020-05-05)
 
 Features
 

@@ -82,7 +82,7 @@ class _IsOwner(permissions.BasePermission):
 
     def has_permission(self, request, view):
         has_perm = True
-        if view.action in self.actions:
+        if view.action and view.action in self.actions:
             user_id = view.kwargs.get(self.user_attr) if self.user_attr else view.kwargs.get('parent_lookup_user')
             has_perm = str(user_id) == str(request.user.pk)
 

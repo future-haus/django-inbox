@@ -80,6 +80,11 @@ class NestedMessagesViewSet(NestedViewSetMixin, ListModelMixin, GenericViewSet):
         Message.objects.mark_all_read(user_id=parent_lookup_user)
         return Response(status=200)
 
+    @action(detail=False, methods=['get'], permission_classes=(IsAuthenticated, IsOwner(actions='unread_count')))
+    def unread_count(self, request, version, parent_lookup_user):
+        unread_count = Message.objects.unread_count(parent_lookup_user)
+        return Response(status=200, data=unread_count)
+
 
 class MessageViewSet(RetrieveModelMixin, UpdateModelMixin, DestroyModelMixin, GenericViewSet):
     permission_classes = (IsAuthenticated, IsOwner(object_user_attr='user'),)
