@@ -127,12 +127,16 @@ class EndpointTests(AppPushTestCaseMixin, TransactionTestCase):
             # Assert the signal was called only once with the args
             handler.assert_called_with(signal=signals.unread_count, count=1, sender=Message)
 
+            self.assertEqual(len(app_push.outbox), 1)
+
             # Mark them as read
             response = self.post(f'/api/v1/users/{user_id}/messages/read')
             self.assertHTTP200(response)
 
             # Assert the signal was called only once with the args
             handler.assert_called_with(signal=signals.unread_count, count=0, sender=Message)
+
+            self.assertEqual(len(app_push.outbox), 2)
 
             response = self.get(f'/api/v1/users/{user_id}/messages')
             self.assertHTTP200(response)
@@ -149,7 +153,7 @@ class EndpointTests(AppPushTestCaseMixin, TransactionTestCase):
 
         process_new_message_logs()
 
-        self.assertEqual(len(app_push.outbox), 3)
+        self.assertEqual(len(app_push.outbox), 4)
         self.assertEqual(len(mail.outbox), 1)
 
         app_push.outbox = []

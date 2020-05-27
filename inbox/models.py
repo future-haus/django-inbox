@@ -76,7 +76,13 @@ class MessageManager(BaseManager.from_queryset(MessageQuerySet)):
                                     is_hidden=False).update(read_at=now)
 
         if updated_count:
-            unread_count.send(sender=Message, count=0)
+            try:
+                user = User.objects.get(pk=user_id)
+            except User.DoesNotExist:
+                return
+            else:
+                Message.send_unread_count_app_push(user, 0)
+                unread_count.send(sender=Message, count=0)
 
     def unread_count(self, user_id: int):
         return self.filter(user_id=user_id, send_at__lte=timezone.now(), read_at__isnull=True, deleted_at__isnull=True,
@@ -288,12 +294,16 @@ class Message(models.Model):
             'data_group': self.group
         }
 
+    @staticmethod
+    def send_unread_count_app_push(user, count):
+        if not inbox_settings.get_config()['DISABLE_NEW_DATA_SILENT_APP_PUSH'] and is_app_push_enabled():
+            AppPushMessage(user, None, None, data={'inbox_message_unread_count': str(count)}).send()
+
     def _send_unread_count(self):
         # Send out new unread count
         count = Message.objects.unread_count(user_id=self.user.pk)
 
-        if not inbox_settings.get_config()['DISABLE_NEW_DATA_SILENT_APP_PUSH'] and is_app_push_enabled():
-            AppPushMessage(self.user, None, None, data={'inbox_message_unread_count': str(count)}).send()
+        self.send_unread_count_app_push(self, count)
 
         unread_count.send(sender=self.__class__, count=count)
 

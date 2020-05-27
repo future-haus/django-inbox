@@ -1,5 +1,11 @@
 # Releases
 
+#### 0.3.26 (2020-05-20)
+
+Fixes
+
+- Send data-only (silent) app push with unread count when using the mark all read endpoint, wasn't working.
+
 #### 0.3.25 (2020-05-27)
 
 Features
