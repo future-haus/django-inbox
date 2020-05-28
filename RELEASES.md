@@ -1,6 +1,12 @@
 # Releases
 
-#### 0.3.26 (2020-05-20)
+#### 0.3.27 (2020-05-27)
+
+Fixes
+
+- Broke Firebase backend by sending message instead of user, corrected
+
+#### 0.3.26 (2020-05-27)
 
 Fixes
 
