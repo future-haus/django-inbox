@@ -286,7 +286,7 @@ class MessageTestCase(AppPushTestCaseMixin, TestCase):
         process_new_messages()
         process_new_message_logs()
 
-        self.assertEqual(len(app_push.outbox), 2)
+        self.assertEqual(len(app_push.outbox), 0)
         self.assertEqual(len(mail.outbox), 1)
 
         # Grab message logs with app_push, verify status and failure reason

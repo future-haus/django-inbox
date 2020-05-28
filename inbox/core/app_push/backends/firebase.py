@@ -52,24 +52,24 @@ class AppPushBackend(BaseAppPushBackend):
                 logger.warning('Exception when calling notify_single_device for {}'.format(
                     message.entity.notification_key
                 ))
-
-            logger.info(json.dumps(response))
-
-            if response['failure'] > 0:
-                if 'failed_registration_ids' in response:
-                    failed_registration_ids = []
-                    for registration_id in response['failed_registration_ids']:
-                        failed_registration_ids.append(registration_id)
-
-                    msg = ', '.join(failed_registration_ids)
-                    logger.warning('Failed registration IDs: {}'.format(msg))
-                else:
-                    errors = []
-                    for result in response['results']:
-                        errors.append(result['error'])
-
-                    msg = "\n".join(errors)
-                    logger.warning('FCM failure: {}'.format(msg))
             else:
-                logger.info('FCM success')
                 logger.info(json.dumps(response))
+
+                if response['failure'] > 0:
+                    if 'failed_registration_ids' in response:
+                        failed_registration_ids = []
+                        for registration_id in response['failed_registration_ids']:
+                            failed_registration_ids.append(registration_id)
+
+                        msg = ', '.join(failed_registration_ids)
+                        logger.warning('Failed registration IDs: {}'.format(msg))
+                    else:
+                        errors = []
+                        for result in response['results']:
+                            errors.append(result['error'])
+
+                        msg = "\n".join(errors)
+                        logger.warning('FCM failure: {}'.format(msg))
+                else:
+                    logger.info('FCM success')
+                    logger.info(json.dumps(response))

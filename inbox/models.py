@@ -303,7 +303,7 @@ class Message(models.Model):
         # Send out new unread count
         count = Message.objects.unread_count(user_id=self.user.pk)
 
-        self.send_unread_count_app_push(self, count)
+        self.send_unread_count_app_push(self.user, count)
 
         unread_count.send(sender=self.__class__, count=count)
 

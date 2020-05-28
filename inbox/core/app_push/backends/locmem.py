@@ -20,6 +20,10 @@ class AppPushBackend(BaseAppPushBackend):
         """Redirect messages to the dummy outbox"""
         msg_count = 0
         for message in messages:  # .message() triggers header validation
+
+            if not message.entity.notification_key:
+                continue
+
             app_push.outbox.append(message)
             msg_count += 1
         return msg_count
