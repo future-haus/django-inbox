@@ -17,7 +17,7 @@ URL = 'http://www.futurehaus.com/'
 EMAIL = 'jt@futurehaus.com'
 AUTHOR = 'Josh Turmel'
 REQUIRES_PYTHON = '>=3.7'
-VERSION = '0.3.27'
+VERSION = '0.3.28'
 
 REQUIRED = [
     'django>=2.2', 'django-annoying', 'django_enumfield>=2.0.0', 'djangorestframework', 'jsonschema', 'drf-extensions',
@@ -89,7 +89,7 @@ class UploadCommand(Command):
         os.system('twine upload -r pypicloud dist/*')
 
         self.status('Pushing git tags…')
-        os.system('git tag v{0}'.format(about['__version__']))
+        os.system('git tag releases/v{0}'.format(about['__version__']))
         os.system('git push --tags')
 
         sys.exit()

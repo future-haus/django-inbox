@@ -1,5 +1,11 @@
 # Releases
 
+#### 0.3.28 (2020-05-28)
+
+Features
+
+- Add `key` to Message objects returned in built-in endpoints
+
 #### 0.3.27 (2020-05-27)
 
 Fixes

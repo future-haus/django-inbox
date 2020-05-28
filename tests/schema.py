@@ -37,9 +37,10 @@ message_preferences = {
 
 message = {
     'type': 'object',
-    'required': ['id',],
+    'required': ['id', 'key', 'subject', 'body', 'data', 'group', 'is_read', 'created_at'],
     'properties': {
         'id': {'type': 'string'},
+        'key': {'type': 'string'},
         'subject': {'type': 'string'},
         'body': {'type': 'string'},
         'data': {'type': ['null', 'object']},
