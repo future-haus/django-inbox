@@ -153,7 +153,7 @@ class EndpointTests(AppPushTestCaseMixin, TransactionTestCase):
 
         process_new_message_logs()
 
-        self.assertEqual(len(app_push.outbox), 4)
+        self.assertEqual(len(app_push.outbox), 3)
         self.assertEqual(len(mail.outbox), 1)
 
         app_push.outbox = []
@@ -164,7 +164,18 @@ class EndpointTests(AppPushTestCaseMixin, TransactionTestCase):
             process_new_message_logs()
 
             self.assertEqual(len(app_push.outbox), 2)
+            self.assertEqual(app_push.outbox[0].data, {'inbox_message_unread_count': '0'})
             self.assertEqual(len(mail.outbox), 1)
+
+        app_push.outbox = []
+        mail.outbox = []
+
+        with freeze_time(future_send_at + timezone.timedelta(seconds=30)):
+            process_new_messages()
+            process_new_message_logs()
+
+            self.assertEqual(len(app_push.outbox), 0)
+            self.assertEqual(len(mail.outbox), 0)
 
     def test_message_preferences_from_different_user(self):
         user_id = 1
@@ -183,6 +194,8 @@ class EndpointTests(AppPushTestCaseMixin, TransactionTestCase):
         # Update default message preference
         response = self._get_message_preferences(user.pk)
         self.validate(response.data, message_preferences)
+        all_group_ids = [group['id'] for group in response.data['results']]
+        self.assertNotIn('inbox_only', all_group_ids)
         response.data['results'][0]['app_push'] = False
         response = self.client.put(f'/api/v1/users/{user.pk}/message_preferences', response.data)
         self.assertHTTP200(response)

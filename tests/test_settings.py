@@ -82,6 +82,25 @@ class SettingsTestCase(TestCase):
                     'skip_sms': []
                 },
                 {
+                    'id': 'inbox_only',
+                    'label': 'Inbox Only',
+                    'description': 'Inbox only messages.',
+                    'is_preference': False,
+                    'use_preference': None,
+                    'preference_defaults': {
+                        'app_push': None,
+                        'email': None,
+                        'sms': None,
+                        'web_push': None
+                    },
+                    'data': {},
+                    'message_keys': ['welcome'],
+                    'skip_app_push': [],
+                    'skip_email': [],
+                    'skip_web_push': [],
+                    'skip_sms': []
+                },
+                {
                     'id': 'account_updated',
                     'label': 'Account Updated',
                     'description': 'When you update your account.',

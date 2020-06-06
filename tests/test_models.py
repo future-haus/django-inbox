@@ -7,6 +7,8 @@ from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.utils import timezone
 from faker import Faker
+from freezegun import freeze_time
+
 from inbox import settings as inbox_settings
 from inbox import signals
 from inbox.constants import MessageLogStatus, MessageLogFailureReason
@@ -140,7 +142,7 @@ class MessageTestCase(AppPushTestCaseMixin, TestCase):
         process_new_messages()
         process_new_message_logs()
 
-        self.assertEqual(len(app_push.outbox), 3)
+        self.assertEqual(len(app_push.outbox), 2)
         self.assertEqual(len(mail.outbox), 1)
 
     def test_create_message_for_unverified_user_empty_outbox(self):
@@ -157,7 +159,7 @@ class MessageTestCase(AppPushTestCaseMixin, TestCase):
         process_new_messages()
         process_new_message_logs()
 
-        self.assertEqual(len(app_push.outbox), 3)
+        self.assertEqual(len(app_push.outbox), 2)
         self.assertEqual(len(mail.outbox), 0)
 
         message.refresh_from_db()
@@ -182,7 +184,7 @@ class MessageTestCase(AppPushTestCaseMixin, TestCase):
 
         process_new_message_logs()
 
-        self.assertEqual(len(app_push.outbox), 2)
+        self.assertEqual(len(app_push.outbox), 1)
         self.assertEqual(len(mail.outbox), 1)
 
         for message_log in message.logs.all():
@@ -221,6 +223,37 @@ class MessageTestCase(AppPushTestCaseMixin, TestCase):
 
         self.assertEqual(message_logs_count, 0)
         self.assertEqual(messages_count, 2)
+
+    def test_message_scheduled_for_future_doesnt_send_unread_push(self):
+        email = fake.ascii_email()
+        user = User.objects.create(email=email, email_verified_on=timezone.now().date(), username=email)
+        user.device_group.notification_key = 'abcdef'
+        user.device_group.save()
+
+        self.assertEqual(len(app_push.outbox), 0)
+        self.assertEqual(len(mail.outbox), 0)
+        self.assertEqual(MessageLog.objects.count(), 0)
+
+        future_at = timezone.now() + timezone.timedelta(days=1)
+
+        Message.objects.create(user=user, key='default', send_at=future_at)
+
+        process_new_messages()
+        process_new_message_logs()
+
+        self.assertEqual(len(app_push.outbox), 0)
+        self.assertEqual(len(mail.outbox), 0)
+
+        # Grab message logs with app_push, verify status and failure reason
+        message_logs = MessageLog.objects.filter(message__user=user)
+        self.assertEqual(len(message_logs), 0)
+
+        with freeze_time(future_at + timezone.timedelta(seconds=30)):
+            process_new_messages()
+            process_new_message_logs()
+
+            self.assertEqual(len(app_push.outbox), 2)
+            self.assertEqual(len(mail.outbox), 1)
 
     def test_message_send_to_group_that_has_app_push_and_email_but_skips_app_push_on_one_key(self):
         # this message key in the group has app push and email
@@ -295,3 +328,30 @@ class MessageTestCase(AppPushTestCaseMixin, TestCase):
         self.assertEqual(message_logs[0].status, MessageLogStatus.FAILED)
         self.assertEqual(message_logs[0].failure_reason, str(MessageLogFailureReason.MISSING_APP_PUSH_KEY))
 
+    def test_create_message_inbox_only_welcome(self):
+        email = fake.ascii_email()
+        user = User.objects.create(email=email, email_verified_on=timezone.now().date(), username=email)
+        user.device_group.notification_key = 'abcdef'
+        user.device_group.save()
+
+        self.assertEqual(MessageLog.objects.count(), 0)
+
+        Message.objects.create(user=user, key='welcome')
+
+        self.assertEqual(len(app_push.outbox), 1)
+
+        process_new_messages()
+        process_new_message_logs()
+
+        self.assertEqual(len(app_push.outbox), 1)
+        self.assertEqual(len(mail.outbox), 0)
+
+        # Grab message logs with app_push, verify status and failure reason
+        messages = Message.objects.filter(user=user)
+        self.assertTrue(len(messages), 1)
+
+        message = messages[0]
+
+        self.assertTrue(message.is_logged)
+        self.assertEqual(message.subject, 'Welcome to Django Inbox')
+        self.assertEqual(message.body, 'Django Inbox is a library, welcome.')

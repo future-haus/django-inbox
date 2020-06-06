@@ -83,6 +83,19 @@ INBOX_CONFIG = {
             'message_keys': ['default']
         },
         {
+            'id': 'inbox_only',
+            'label': 'Inbox Only',
+            'description': 'Inbox only messages.',
+            'is_preference': False,
+            'preference_defaults': {
+                "app_push": None,
+                "email": None,
+                "sms": None,
+                "web_push": None
+            },
+            'message_keys': ['welcome']
+        },
+        {
             'id': 'account_updated',
             'label': 'Account Updated',
             'description': 'When you update your account.',

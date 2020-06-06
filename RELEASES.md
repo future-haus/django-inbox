@@ -1,5 +1,18 @@
 # Releases
 
+#### 0.3.29 (2020-06-06)
+
+Features
+
+- Ability to create inbox only groups where all medium preferences are set to None so that it only ever shows up
+within the inbox messages API.
+- inbox_status command takes this into account and only requires there being a subject.txt and body.txt template.
+
+Improvement
+
+- Reduce number of times that the unread count silent push is sent when a Message is created,
+processed for logs, etc.
+
 #### 0.3.28 (2020-05-28)
 
 Features

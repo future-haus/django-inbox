@@ -1,5 +1,6 @@
 import inspect
 import json
+import logging
 import os
 import uuid
 from functools import lru_cache
@@ -28,6 +29,7 @@ from inbox.signals import unread_count
 from inbox.test.utils import dump_template
 
 User = get_user_model()
+logger = logging.getLogger(__name__)
 
 MEDIUMS = ('app_push', 'email', 'sms', 'web_push',)  # TODO Consolidate by using the enum below
 
@@ -219,14 +221,23 @@ class Message(models.Model):
         is_new = not self.id
         self.full_clean()
 
+        now = timezone.now()
+        send_unread_count = False
         if is_new:
+            # This scenario means it was meant to be sent immediately
+            if self.send_at < now:
+                send_unread_count = True
+
             self.subject = self._build_subject()
             self.body = self._build_body()
+        else:
+            if now >= self.send_at > self.created_at:
+                send_unread_count = True
 
         super().save(*args, **kwargs)
 
         # If the message is in the future we don't need to send the unread count
-        if self.send_at <= timezone.now():
+        if send_unread_count:
             self._send_unread_count()
 
     def delete(self, using=None, keep_parents=False):
@@ -395,7 +406,13 @@ class MessageLog(models.Model):
 
         msg = EmailMessage(subject, body, to=[self.message.user.email])
         msg.content_subtype = "html"
-        msg.send()
+        try:
+            msg.send()
+        except Exception as e:
+            msg = str(e)
+            self.status = MessageLogStatus.FAILED
+            self.failure_reason = msg
+            logger.error(msg)
 
     def _get_context_for_template(self):
         return {
