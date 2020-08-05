@@ -17,14 +17,14 @@ from inbox.utils import save_message_preferences
 class NestedMessagePreferencesMixin:
 
     @action(methods=['GET', 'PUT'], detail=True,
-            url_path='message_preferences(?:/(?P<preference_id>[a-z_]+)/(?P<medium_id>[a-z_]+))?',
+            url_path='message[-_]preferences(?:/(?P<preference_id>[a-z-_]+)/(?P<medium_id>[a-z-_]+))?',
             permission_classes=[IsAuthenticated, IsOwner])
-    def message_preferences(self, request, pk=None, preference_id=None, medium_id=None, **kwargs):
+    def message_preferences(self, request, pk=None, dash=None, preference_id=None, medium_id=None, **kwargs):
         """
         Mixin for UserViewSet
 
-        Supports updating all preferences at once, eg PUT /api/v1/users/{userId}/message_preferences
-        Supports updating a single preference+medium combo, eg PUT /api/v1/users/{userId}/message_preferences/{preferenceId}/{medium}
+        Supports updating all preferences at once, eg PUT /api/v1/users/{userId}/message-preferences
+        Supports updating a single preference+medium combo, eg PUT /api/v1/users/{userId}/message-preferences/{preferenceId}/{medium}
 
         :param request:
         :param pk:
@@ -33,6 +33,7 @@ class NestedMessagePreferencesMixin:
         :return:
         """
         message_preferences = self.get_object().message_preferences
+        medium_id = medium_id.replace('-', '_') if medium_id else medium_id
 
         if self.request.method == 'PUT':
             try:
@@ -80,7 +81,8 @@ class NestedMessagesViewSet(NestedViewSetMixin, ListModelMixin, GenericViewSet):
         Message.objects.mark_all_read(user_id=parent_lookup_user)
         return Response(status=200)
 
-    @action(detail=False, methods=['get'], permission_classes=(IsAuthenticated, IsOwner(actions='unread_count')))
+    @action(detail=False, methods=['get'], url_path='unread[-_]count',
+            permission_classes=(IsAuthenticated, IsOwner(actions='unread_count')))
     def unread_count(self, request, version, parent_lookup_user):
         unread_count = Message.objects.unread_count(parent_lookup_user)
         return Response(status=200, data=unread_count)

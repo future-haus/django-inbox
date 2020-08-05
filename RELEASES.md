@@ -1,5 +1,12 @@
 # Releases
 
+#### 0.3.30 (2020-08-05)
+
+Improvement
+
+- Allow hyphen or underscore URL paths on the pre-built endpoints, updated README to reflect preferred
+usage of hyphens. In the future, will probably make it a configuration that defaults to hyphens.
+
 #### 0.3.29 (2020-06-06)
 
 Features

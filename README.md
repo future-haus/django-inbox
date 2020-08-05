@@ -142,7 +142,7 @@ There are some views provided for easy implementation of the library without bui
 
 * `GET /api/v1/users/{userId}/messages` - Get paginated list of messages for a `User`, most recent first
 * `POST /api/v1/users/{userId}/messages/read` - Mark all messages as read for a `User`
-* `GET /api/v1/users/{userId}/messages/unread_count` - Get unread count for a `User`
+* `GET /api/v1/users/{userId}/messages/unread-count` - Get unread count for a `User`
 * `GET /api/v1/messages/{messageId}` - Get message
 * `PUT /api/v1/messages/{messageId}` - Update message, used to set `is_read` to `true` or `false`
 * `DELETE /api/v1/messages/{messageId}` - Delete a message, no longer returned in list call.
@@ -158,10 +158,10 @@ Example routing setup:
 
 User message preferences mixin endpoints:
 
-* `GET /api/v1/users/{userId}/message_preferences` - Get message preferences for a `User`.
-* `PUT /api/v1/users/{userId}/message_preferences` - Update all `MessagePreferences` for a `User` at once, same 
+* `GET /api/v1/users/{userId}/message-preferences` - Get message preferences for a `User`.
+* `PUT /api/v1/users/{userId}/message-preferences` - Update all `MessagePreferences` for a `User` at once, same 
 payload that `GET` returns.
-* `PUT /api/v1/users/{userId}/message_preferences/{messagePreferenceId}/{medium:'app_push'|'email'}` - Update 
+* `PUT /api/v1/users/{userId}/message-preferences/{messagePreferenceId}/{medium:'app-push'|'email'}` - Update 
 individual MessagePreference+medium combo, this endpoint is suggested if the implementation is saving each 
 MessagePreference individually as the `User` toggles it to avoid race conditions the whole payload endpoint would
 introduce. The payload is just a boolean `true` or `false`.

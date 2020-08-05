@@ -388,6 +388,33 @@ class EndpointTests(AppPushTestCaseMixin, TransactionTestCase):
         response = self._get_message_preferences(user.pk)
         self.validate(response.data, message_preferences)
         message_preference = response.data['results'][0]
+        response = self.client.put(f'/api/v1/users/{user.pk}/message-preferences/{message_preference["id"]}/app-push',
+                                   False)
+        self.assertHTTP200(response)
+        self.assertFalse(response.data)
+        response = self.client.put(f'/api/v1/users/{user.pk}/message-preferences/{message_preference["id"]}/app-push',
+                                   True)
+        self.assertHTTP200(response)
+        self.assertTrue(response.data)
+
+        response = self.client.put(f'/api/v1/users/{user.pk}/message-preferences/{message_preference["id"]}/fake',
+                                   True)
+        self.assertHTTP400(response)
+
+        response = self.client.put(f'/api/v1/users/{user.pk}/message-preferences/fake/app-push',
+                                   True)
+        self.assertHTTP400(response)
+
+    def test_message_preference_medium_with_underscore_paths(self):
+        user_id = 1
+        user = User.objects.get(pk=user_id)
+        self.client.force_login(user)
+
+        # Case 1
+        # Update default message preference
+        response = self._get_message_preferences(user.pk)
+        self.validate(response.data, message_preferences)
+        message_preference = response.data['results'][0]
         response = self.client.put(f'/api/v1/users/{user.pk}/message_preferences/{message_preference["id"]}/app_push',
                                    False)
         self.assertHTTP200(response)
@@ -522,6 +549,33 @@ class EndpointTests(AppPushTestCaseMixin, TransactionTestCase):
         self.assertTrue(message.is_logged)
 
     def test_fetching_unread_count(self):
+
+        user_id = 1
+        user = User.objects.get(pk=user_id)
+
+        response = self.get(f'/api/v1/users/{user_id}/messages/unread-count')
+        self.assertHTTP401(response)
+
+        self.client.force_login(user)
+
+        handler = MagicMock()
+        signals.unread_count.connect(handler, sender=Message)
+
+        response = self.get(f'/api/v1/users/{user_id}/messages/unread-count')
+
+        self.assertHTTP200(response)
+        self.assertEqual(response.data, 0)
+
+        response = self.patch(f'/api/v1/users/{user_id}', {'first_name': 'Test'})
+        self.assertHTTP200(response)
+
+        response = self.get(f'/api/v1/users/{user_id}/messages/unread-count')
+
+        self.assertHTTP200(response)
+        self.assertEqual(response.data, 1)
+        self.validate(response.data, unread_count)
+        
+    def test_fetching_unread_count_with_underscore_path(self):
 
         user_id = 1
         user = User.objects.get(pk=user_id)
