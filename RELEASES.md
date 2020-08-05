@@ -1,5 +1,11 @@
 # Releases
 
+#### 0.3.31 (2020-08-05)
+
+Fixes
+
+- Strip leading and trailing whitespace on subject and body before saving to Message record
+
 #### 0.3.30 (2020-08-05)
 
 Improvement
