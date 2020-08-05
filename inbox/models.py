@@ -281,7 +281,7 @@ class Message(models.Model):
         template.backend.engine.autoescape = False
         context = self._get_context_for_template()
         res = template.render(context)
-        return ''.join(res.splitlines())
+        return ''.join(res.splitlines()).strip()
 
     def _build_body(self):
         try:
@@ -295,7 +295,7 @@ class Message(models.Model):
 
         template.backend.engine.autoescape = autoescape
         context = self._get_context_for_template()
-        return template.render(context)
+        return template.render(context).strip()
 
     def _get_context_for_template(self):
         return {
