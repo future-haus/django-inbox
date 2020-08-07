@@ -225,13 +225,13 @@ class Message(models.Model):
         send_unread_count = False
         if is_new:
             # This scenario means it was meant to be sent immediately
-            if self.send_at < now:
+            if self.send_at <= now:
                 send_unread_count = True
 
             self.subject = self._build_subject()
             self.body = self._build_body()
         else:
-            if now >= self.send_at > self.created_at:
+            if now > self.send_at > self.created_at:
                 send_unread_count = True
 
         super().save(*args, **kwargs)

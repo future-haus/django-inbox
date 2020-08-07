@@ -1,5 +1,11 @@
 # Releases
 
+#### 0.3.32 (2020-08-07)
+
+Fixes
+
+- When a Message was created, if send_at == now exactly then comms would be sent out but an unread count would not.
+
 #### 0.3.31 (2020-08-05)
 
 Fixes
