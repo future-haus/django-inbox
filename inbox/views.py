@@ -17,7 +17,7 @@ from inbox.utils import save_message_preferences
 class NestedMessagePreferencesMixin:
 
     @action(methods=['GET', 'PUT'], detail=True,
-            url_path='message[-_]preferences(?:/(?P<preference_id>[a-z-_]+)/(?P<medium_id>[a-z-_]+))?',
+            url_path='message[-_]preferences(?:/(?P<preference_id>[a-z_]+)/(?P<medium_id>[a-z_]+))?',
             permission_classes=[IsAuthenticated, IsOwner])
     def message_preferences(self, request, pk=None, dash=None, preference_id=None, medium_id=None, **kwargs):
         """
@@ -33,7 +33,6 @@ class NestedMessagePreferencesMixin:
         :return:
         """
         message_preferences = self.get_object().message_preferences
-        medium_id = medium_id.replace('-', '_') if medium_id else medium_id
 
         if self.request.method == 'PUT':
             try:

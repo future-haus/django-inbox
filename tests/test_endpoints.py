@@ -388,33 +388,6 @@ class EndpointTests(AppPushTestCaseMixin, TransactionTestCase):
         response = self._get_message_preferences(user.pk)
         self.validate(response.data, message_preferences)
         message_preference = response.data['results'][0]
-        response = self.client.put(f'/api/v1/users/{user.pk}/message-preferences/{message_preference["id"]}/app-push',
-                                   False)
-        self.assertHTTP200(response)
-        self.assertFalse(response.data)
-        response = self.client.put(f'/api/v1/users/{user.pk}/message-preferences/{message_preference["id"]}/app-push',
-                                   True)
-        self.assertHTTP200(response)
-        self.assertTrue(response.data)
-
-        response = self.client.put(f'/api/v1/users/{user.pk}/message-preferences/{message_preference["id"]}/fake',
-                                   True)
-        self.assertHTTP400(response)
-
-        response = self.client.put(f'/api/v1/users/{user.pk}/message-preferences/fake/app-push',
-                                   True)
-        self.assertHTTP400(response)
-
-    def test_message_preference_medium_with_underscore_paths(self):
-        user_id = 1
-        user = User.objects.get(pk=user_id)
-        self.client.force_login(user)
-
-        # Case 1
-        # Update default message preference
-        response = self._get_message_preferences(user.pk)
-        self.validate(response.data, message_preferences)
-        message_preference = response.data['results'][0]
         response = self.client.put(f'/api/v1/users/{user.pk}/message_preferences/{message_preference["id"]}/app_push',
                                    False)
         self.assertHTTP200(response)

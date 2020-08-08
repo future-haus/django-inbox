@@ -1,5 +1,12 @@
 # Releases
 
+#### 0.3.33 (2020-08-07)
+
+Fixes
+
+- Path ids for preference id and medium id should always be underscores (eg app_push), not hyphens too, only needed
+to change message_preferences to support both, not the ids.
+
 #### 0.3.32 (2020-08-07)
 
 Fixes
