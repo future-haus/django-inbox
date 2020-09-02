@@ -1,5 +1,14 @@
 # Releases
 
+#### 0.3.34 (2020-09-01)
+
+Fixes
+
+- Inbox message endpoint for retrieving list of messages should only show them once they've been logged, otherwise the
+callback hooks don't have a way to hide a message before it possibly shows depending on the latency between 
+message processing time and the send_at time... it's possible a message could show up in the inbox briefly before it's
+hidden because it wasn't supposed to be shown.
+
 #### 0.3.33 (2020-08-07)
 
 Fixes

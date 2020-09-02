@@ -90,6 +90,12 @@ class EndpointTests(AppPushTestCaseMixin, TransactionTestCase):
         response = self.patch(f'/api/v1/users/{user_id}', {'first_name': 'Test'})
         self.assertHTTP200(response)
 
+        process_new_messages()
+        process_new_message_logs()
+
+        # Assert the signal was called only once with the args
+        handler.assert_called_with(signal=signals.unread_count, count=1, sender=Message)
+
         # Verify there's an update_account message in Inbox and in model directly
         response = self.get(f'/api/v1/users/{user_id}/messages')
         self.assertHTTP200(response)
@@ -102,6 +108,9 @@ class EndpointTests(AppPushTestCaseMixin, TransactionTestCase):
 
         future_send_at = timezone.now() + timezone.timedelta(days=3)
         with freeze_time(future_send_at):
+            process_new_messages()
+            process_new_message_logs()
+
             response = self.get(f'/api/v1/users/{user_id}/messages')
             self.assertHTTP200(response)
             self.assertTrue(len(response.data['results']), 2)
@@ -125,9 +134,9 @@ class EndpointTests(AppPushTestCaseMixin, TransactionTestCase):
             self.assertIsNone(response.data['results'][1]['data'])
 
             # Assert the signal was called only once with the args
-            handler.assert_called_with(signal=signals.unread_count, count=1, sender=Message)
+            handler.assert_called_with(signal=signals.unread_count, count=2, sender=Message)
 
-            self.assertEqual(len(app_push.outbox), 1)
+            self.assertEqual(len(app_push.outbox), 4)
 
             # Mark them as read
             response = self.post(f'/api/v1/users/{user_id}/messages/read')
@@ -136,7 +145,7 @@ class EndpointTests(AppPushTestCaseMixin, TransactionTestCase):
             # Assert the signal was called only once with the args
             handler.assert_called_with(signal=signals.unread_count, count=0, sender=Message)
 
-            self.assertEqual(len(app_push.outbox), 2)
+            self.assertEqual(len(app_push.outbox), 5)
 
             response = self.get(f'/api/v1/users/{user_id}/messages')
             self.assertHTTP200(response)
@@ -149,12 +158,12 @@ class EndpointTests(AppPushTestCaseMixin, TransactionTestCase):
 
         # Verify there are message logs for both of these messages
         message_logs = MessageLog.objects.filter(message__user_id=user_id)
-        self.assertEqual(len(message_logs), 2)
+        self.assertEqual(len(message_logs), 4)
 
         process_new_message_logs()
 
-        self.assertEqual(len(app_push.outbox), 3)
-        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(len(app_push.outbox), 5)
+        self.assertEqual(len(mail.outbox), 2)
 
         app_push.outbox = []
         mail.outbox = []
@@ -163,9 +172,8 @@ class EndpointTests(AppPushTestCaseMixin, TransactionTestCase):
             process_new_messages()
             process_new_message_logs()
 
-            self.assertEqual(len(app_push.outbox), 2)
-            self.assertEqual(app_push.outbox[0].data, {'inbox_message_unread_count': '0'})
-            self.assertEqual(len(mail.outbox), 1)
+            self.assertEqual(len(app_push.outbox), 0)
+            self.assertEqual(len(mail.outbox), 0)
 
         app_push.outbox = []
         mail.outbox = []
@@ -422,6 +430,9 @@ class EndpointTests(AppPushTestCaseMixin, TransactionTestCase):
         response = self.patch(f'/api/v1/users/{user_id}', {'first_name': 'Test'})
         self.assertHTTP200(response)
 
+        process_new_messages()
+        process_new_message_logs()
+
         # Verify there's an update_account message in Inbox and in model directly
         response = self.get(f'/api/v1/users/{user_id}/messages')
         message_id = response.data['results'][0]['id']
@@ -471,6 +482,9 @@ class EndpointTests(AppPushTestCaseMixin, TransactionTestCase):
         # Update user, this triggers message in our test app
         response = self.patch(f'/api/v1/users/{user_id}', {'first_name': 'Test'})
         self.assertHTTP200(response)
+
+        process_new_messages()
+        process_new_message_logs()
 
         # Verify there's an update_account message in Inbox and in model directly
         response = self.get(f'/api/v1/users/{user_id}/messages')
