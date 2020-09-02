@@ -606,7 +606,7 @@ def reconcile_default_preferences(preferences):
             if medium not in default_preference and medium in preferences[k]:
                 del preferences[k][medium]
 
-    for k, default_preference in enumerate(get_default_preferences()):
+    for k, default_preference in enumerate(get_default_preferences(include_all_keys=True)):
         try:
             next((p for p in preferences if p['id'] == default_preference['id']))
         except StopIteration:

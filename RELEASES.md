@@ -1,5 +1,13 @@
 # Releases
 
+#### 0.3.36 (2020-09-02)
+
+Fixes
+
+- When adding new preferences, if a user doesn't have them stored when it's merging in the new ones it doesn't include
+all the keys like 'label', 'description', etc. If using the built-in endpoints/serializers or relying on these directly 
+it can cause crashes.
+
 #### 0.3.35 (2020-09-02)
 
 Fixes
