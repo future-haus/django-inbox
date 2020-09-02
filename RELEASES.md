@@ -1,6 +1,13 @@
 # Releases
 
-#### 0.3.34 (2020-09-01)
+#### 0.3.35 (2020-09-02)
+
+Fixes
+
+- Resolves issue introduced in 0.3.34 where unread count data only push would be sent but message isn't yet visible on
+the API endpoints.
+
+#### 0.3.34 (2020-09-02)
 
 Fixes
 

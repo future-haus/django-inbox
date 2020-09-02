@@ -49,11 +49,17 @@ class MessageTestCase(AppPushTestCaseMixin, TestCase):
         # Do what it takes to trigger the signal
         Message.objects.create(user=self.user, key='default')
 
+        process_new_messages()
+        process_new_message_logs()
+
         # Assert the signal was called only once with the args
         handler.assert_called_once_with(signal=signals.unread_count, count=1, sender=Message)
 
         # Do what it takes to trigger the signal
         Message.objects.create(user=self.user, key='default')
+
+        process_new_messages()
+        process_new_message_logs()
 
         # Assert the signal was called only once with the args
         handler.assert_called_with(signal=signals.unread_count, count=2, sender=Message)
@@ -67,6 +73,9 @@ class MessageTestCase(AppPushTestCaseMixin, TestCase):
         Message.objects.create(user=self.user, key='default')
         Message.objects.create(user=self.user, key='default')
         Message.objects.create(user=self.user, key='default')
+
+        process_new_messages()
+        process_new_message_logs()
 
         # Assert the signal was called only once with the args
         handler.assert_called_with(signal=signals.unread_count, count=3, sender=Message)
@@ -338,7 +347,8 @@ class MessageTestCase(AppPushTestCaseMixin, TestCase):
 
         Message.objects.create(user=user, key='welcome')
 
-        self.assertEqual(len(app_push.outbox), 1)
+        # Unread count isn't sent until the message is processed
+        self.assertEqual(len(app_push.outbox), 0)
 
         process_new_messages()
         process_new_message_logs()
