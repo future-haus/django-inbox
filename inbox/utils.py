@@ -25,6 +25,19 @@ def process_messages(messages):
     with transaction.atomic():
         for message in messages:
 
+            post_message_get = None
+            if hooks_module:
+                try:
+                    post_message_get = import_string(f'{hooks_module}.{message.key}.post_message_get')
+                except (ImportError, ModuleNotFoundError) as e:
+                    pass
+
+            if post_message_get:
+                message = post_message_get(message)
+
+            if not message:
+                continue
+
             # Determine what mediums, based on the config, that it can be sent to. We'll filter out by user's
             # preferences when processing the logs to actually send
             mediums = [k for k, v in message._get_group_from_key()['preference_defaults'].items() if v is not None]

@@ -1,5 +1,13 @@
 # Releases
 
+#### 0.3.37 (2020-09-08)
+
+Improvement
+
+- Adds 'post_message_get' callback that is ran before any message log initialization or hooks are ran when processing
+message logs. Useful for altering or removing the Message object itself. If None is returned from hook then rest of
+processing for that Message is skipped, otherwise return the Message.
+
 #### 0.3.36 (2020-09-02)
 
 Fixes

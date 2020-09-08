@@ -56,7 +56,7 @@ INBOX_CONFIG = {
     'TESTING_MEDIUM_OUTPUT_PATH': None,  # Only set this in the testing environment, it will write final outputs for mediums being sent to.
     'DISABLE_NEW_DATA_SILENT_APP_PUSH': False,  # If you have groups with app_push and don't want the silent data push to go out, set this to True
     'MESSAGE_CREATE_FAIL_SILENTLY': True,  # Fail silently if the properties passed to Message.create() would cause an error, this is useful for not crashing in production
-    'HOOKS_MODULE': None  # Supports pre_message_log_save, post_message_log_save, and post_message_to_logs
+    'HOOKS_MODULE': None  # Supports post_message_get, pre_message_log_save, post_message_log_save, and post_message_to_logs
     'PROCESS_NEW_MESSAGES_LIMIT': 25,  # Default limit for processing new messages
     'PROCESS_NEW_MESSAGE_LOGS_LIMIT': 25  # Default limit for processing new message logs
 }
