@@ -112,8 +112,7 @@ class MessageViewSet(RetrieveModelMixin, UpdateModelMixin, DestroyModelMixin, Ge
         return super().get_serializer_class()
 
     def perform_destroy(self, instance):
-        instance.deleted_at = timezone.now()
-        instance.save()
+        instance.delete()
 
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)

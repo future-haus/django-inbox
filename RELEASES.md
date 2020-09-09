@@ -1,5 +1,12 @@
 # Releases
 
+#### 0.3.38 (2020-09-09)
+
+Improvement
+
+- Adds ability to pass force=True to Message.delete method so that you can force an actual deletion rather than a
+tombstoning.
+
 #### 0.3.37 (2020-09-08)
 
 Improvement

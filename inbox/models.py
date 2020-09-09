@@ -236,9 +236,12 @@ class Message(models.Model):
         if send_unread_count:
             self._send_unread_count()
 
-    def delete(self, using=None, keep_parents=False):
-        self.deleted_at = timezone.now()
-        self.save(using=using)
+    def delete(self, using=None, keep_parents=False, force=False):
+        if force:
+            super().delete(using=using, keep_parents=keep_parents)
+        else:
+            self.deleted_at = timezone.now()
+            self.save(using=using)
 
         self._send_unread_count()
 
