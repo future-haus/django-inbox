@@ -18,9 +18,14 @@ class MessageListSerializer(serializers.ModelSerializer):
 
 class MessageSerializer(MessageListSerializer):
 
+    body = serializers.SerializerMethodField()
+
     class Meta:
         model = MessageListSerializer.Meta.model
         fields = MessageListSerializer.Meta.fields + []
+
+    def get_body(self, obj):
+        return obj.body_full
 
 
 class MessageUpdateSerializer(serializers.ModelSerializer):

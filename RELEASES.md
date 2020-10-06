@@ -1,5 +1,17 @@
 # Releases
 
+#### 0.4.0 (2020-10-06)
+
+Features
+
+- Add ability to GET/PUT to message_preferences with an token that can be sent along in any `Message` but specifically
+design for the needs/requirements of email.
+- Ability to set body_excerpt.html or body_excerpt.txt templates for a message so that the body stored in the database
+for a Message can be shorter for list calls and then individual endpoint return full template from disk, useful for
+long form content. If you want long form stored in DB just don't include those new templates.
+- Ability to force send a Message, bypasses hooks which could cancel it and bypasses checks like verified email or
+if that message group preference is off it will still send.
+
 #### 0.3.38 (2020-09-09)
 
 Improvement

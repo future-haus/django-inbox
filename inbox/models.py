@@ -174,6 +174,7 @@ class Message(models.Model):
                                                              "this flag to true.")
     send_at = models.DateTimeField(db_index=True, default=timezone.now)
     is_logged = models.BooleanField(default=False)
+    is_forced = models.BooleanField(default=False)
     read_at = models.DateTimeField(blank=True, db_index=True, null=True, verbose_name='Marked Read At')
     created_at = models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='Created')
     updated_at = models.DateTimeField(auto_now=True, db_index=True, verbose_name='Updated')
@@ -192,6 +193,10 @@ class Message(models.Model):
             'label': group['label'],
             'data': group['data']
         }
+
+    @property
+    def body_full(self):
+        return self._build_body()
 
     @is_read.setter
     def is_read(self, value: bool):
@@ -224,8 +229,11 @@ class Message(models.Model):
         now = timezone.now()
         send_unread_count = False
         if is_new:
+            if self.is_forced:
+                self.send_at = now
+
             self.subject = self._build_subject()
-            self.body = self._build_body()
+            self.body = self._build_body_excerpt()
         else:
             if self.is_logged and now >= self.send_at:
                 send_unread_count = True
@@ -274,27 +282,47 @@ class Message(models.Model):
 
         return self.base_subject_template, self.base_body_template
 
-    def _build_subject(self):
-        template_name = f'inbox/{self.key}/subject.txt'
-        template = loader.get_template(template_name)
-        template.backend.engine.autoescape = False
-        context = self._get_context_for_template()
-        res = template.render(context)
-        return ''.join(res.splitlines()).strip()
-
-    def _build_body(self):
-        try:
-            autoescape = True
-            template_name = f'inbox/{self.key}/body.html'
-            template = loader.get_template(template_name)
-        except TemplateDoesNotExist:
-            autoescape = False
-            template_name = f'inbox/{self.key}/body.txt'
-            template = loader.get_template(template_name)
+    def _render_from_templates(self, templates):
+        template = None
+        autoescape = True
+        for template_name, autoescape in templates:
+            try:
+                template = loader.get_template(template_name)
+            except TemplateDoesNotExist:
+                continue
+            else:
+                break
 
         template.backend.engine.autoescape = autoescape
         context = self._get_context_for_template()
         return template.render(context).strip()
+
+    def _build_subject(self):
+        templates = (
+            (f'inbox/{self.key}/subject.txt', False),
+        )
+
+        res = self._render_from_templates(templates)
+
+        return ''.join(res.splitlines()).strip()
+
+    def _build_body_excerpt(self):
+        templates = (
+            (f'inbox/{self.key}/body_excerpt.html', True),
+            (f'inbox/{self.key}/body_excerpt.txt', False),
+            (f'inbox/{self.key}/body.html', True),
+            (f'inbox/{self.key}/body.txt', False),
+        )
+
+        return self._render_from_templates(templates)
+
+    def _build_body(self):
+        templates = (
+            (f'inbox/{self.key}/body.html', True),
+            (f'inbox/{self.key}/body.txt', False),
+        )
+
+        return self._render_from_templates(templates)
 
     def _get_context_for_template(self):
         return {
@@ -478,7 +506,9 @@ class MessageLog(models.Model):
             # Fallback to generate the body for the Inbox object's body
             template_names.extend([
                 (f'inbox/{key}/body.html', False),
-                (f'inbox/{key}/body.txt', True)
+                (f'inbox/{key}/body.txt', True),
+                (f'inbox/{key}/body_excerpt.html', False),
+                (f'inbox/{key}/body_excerpt.txt', False),
             ])
 
         if not debug:

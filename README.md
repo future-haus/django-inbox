@@ -123,6 +123,10 @@ For the subject and body in the inbox:
 * `inbox/{message_key}/subject.txt`
 * `inbox/{message_key}/body.html`
 
+Optionally for the inbox you can include a `body_excerpt.html` or `body_excerpt.txt` that will be used for the body when
+returned in the list endpoint, and stored in the body field in the DB. For the retrieve endpoint it will still use the
+full `body.html` or `body.txt` and loaded of the disk as needed rather than being stored. Better for long form content.
+
 For the subject:
 
 * `inbox/{message_key}/subject_{'app_push'|'email'}.txt`
@@ -176,6 +180,14 @@ class UserViewSet(NestedMessagePreferencesMixin, mixins.RetrieveModelMixin,
     ...
 ```
 
+Operate on MessagePreferences while not logged in, useful for getting/updating from links in emails, or other 
+message mediums.
+
+* `GET /api/v1/message_preferences/{token}` operates the same as `GET /api/v1/users/{userId}/message_preferences`
+* `PUT /api/v1/message_preferences/{token}` operates the same as `PUT /api/v1/users/{userId}/message_preferences`
+* `PUT /api/v1/message_preferences/{token}/{messagePreferenceId}/{medium:'app_push'|'email'}` operates the same as
+`PUT /api/v1/users/{userId}/message_preferences/{messagePreferenceId}/{medium:'app_push'|'email'}`
+
 #### Usage
 
 Simple:
@@ -190,6 +202,12 @@ user_id into the message_id to enforce uniqueness across users.
 
 ```python
 Message.objects.create(user=user, key='morning_coffee_reminder', message_id=f'mcr_20100808')
+```
+
+If you want to force a test send of a Message that will bypass any hooks and other logic like
+message preferences, then set the `is_forced=True` property on the Message.
+```python
+Message.objects.create(user=user, key='example_message_key', is_forced=True)
 ```
 
 Determine whether a message id (or list of a message ids) have Messages.

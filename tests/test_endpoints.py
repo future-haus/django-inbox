@@ -1,8 +1,10 @@
+import base64
 from unittest.mock import MagicMock
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core import mail
+from django.core.signing import Signer
 from django.utils import timezone
 from freezegun import freeze_time
 import responses
@@ -16,7 +18,7 @@ from inbox.test.utils import AppPushTestCaseMixin
 from inbox.utils import process_new_messages, process_new_message_logs
 from tests.models import DeviceGroup
 from tests.schema import message_preferences, messages, message, unread_count
-from tests.test import TestCase, TransactionTestCase
+from tests.test import TransactionTestCase
 
 User = get_user_model()
 
@@ -111,32 +113,37 @@ class EndpointTests(AppPushTestCaseMixin, TransactionTestCase):
             process_new_messages()
             process_new_message_logs()
 
-            response = self.get(f'/api/v1/users/{user_id}/messages')
-            self.assertHTTP200(response)
-            self.assertTrue(len(response.data['results']), 2)
+            res = self.get(f'/api/v1/users/{user_id}/messages')
+            self.assertHTTP200(res)
+            self.assertTrue(len(res.data['results']), 2)
 
-            self.assertTrue(int(response.data['results'][0]['id']) > int(response.data['results'][1]['id']))
+            self.assertTrue(int(res.data['results'][0]['id']) > int(res.data['results'][1]['id']))
 
-            self.assertFalse(response.data['results'][0]['is_read'])
-            self.assertEqual(response.data['results'][0]['subject'], 'Account Updated Subject')
-            self.assertEqual(response.data['results'][0]['body'], 'Account updated body.')
-            self.assertEqual(response.data['results'][0]['group'], {'id': 'account_updated',
-                                                                    'label': 'Account Updated',
-                                                                    'data': {}})
-            self.assertIsNone(response.data['results'][0]['data'])
+            self.assertFalse(res.data['results'][0]['is_read'])
+            self.assertEqual(res.data['results'][0]['subject'], 'Account Updated Subject')
+            self.assertEqual(res.data['results'][0]['body'], 'Account updated body excerpt.')
+            self.assertEqual(res.data['results'][0]['group'], {'id': 'account_updated',
+                                                               'label': 'Account Updated',
+                                                               'data': {}})
+            self.assertIsNone(res.data['results'][0]['data'])
 
-            self.assertFalse(response.data['results'][1]['is_read'])
-            self.assertEqual(response.data['results'][1]['subject'], 'Account Updated Subject')
-            self.assertEqual(response.data['results'][1]['body'], 'Account updated body.')
-            self.assertEqual(response.data['results'][1]['group'], {'id': 'account_updated',
-                                                                    'label': 'Account Updated',
-                                                                    'data': {}})
-            self.assertIsNone(response.data['results'][1]['data'])
+            self.assertFalse(res.data['results'][1]['is_read'])
+            self.assertEqual(res.data['results'][1]['subject'], 'Account Updated Subject')
+            self.assertEqual(res.data['results'][1]['body'], 'Account updated body excerpt.')
+            self.assertEqual(res.data['results'][1]['group'], {'id': 'account_updated',
+                                                               'label': 'Account Updated',
+                                                               'data': {}})
+            self.assertIsNone(res.data['results'][1]['data'])
 
             # Assert the signal was called only once with the args
             handler.assert_called_with(signal=signals.unread_count, count=2, sender=Message)
 
             self.assertEqual(len(app_push.outbox), 4)
+
+            # Pull individual message to get full body
+            res = self.get(f'/api/v1/messages/{res.data["results"][0]["id"]}')
+            self.assertHTTP200(res)
+            self.assertEqual(res.data['body'], 'Account updated body.')
 
             # Mark them as read
             response = self.post(f'/api/v1/users/{user_id}/messages/read')
@@ -633,3 +640,158 @@ class EndpointTests(AppPushTestCaseMixin, TransactionTestCase):
         response = self.post(f'/api/v1/users/{user_id_1}/messages/unread_count', {})
 
         self.assertHTTP405(response)
+
+    def test_get_message_preferences_by_token(self):
+        user_id = 1
+        user = User.objects.get(pk=user_id)
+        self.client.logout()
+
+        signer = Signer()
+        value = signer.sign(user.pk)
+        token = base64.urlsafe_b64encode(value.encode('ascii')).decode('utf8')
+
+        response = self.get(f'/api/v1/message-preferences/{token}')
+
+        self.assertHTTP200(response)
+        self.validate(response.data, message_preferences)
+
+    def test_get_message_preferences_by_token_while_authenticated(self):
+        user_id = 1
+        user = User.objects.get(pk=user_id)
+        self.client.force_login(user=user)
+
+        signer = Signer()
+        value = signer.sign(user.pk)
+        token = base64.urlsafe_b64encode(value.encode('ascii')).decode('utf8')
+
+        response = self.get(f'/api/v1/message-preferences/{token}')
+
+        self.assertHTTP200(response)
+        self.validate(response.data, message_preferences)
+
+    def test_get_message_preferences_by_token_while_authenticated_as_different_user(self):
+        user_id = 1
+        user = User.objects.get(pk=user_id)
+        self.client.force_login(user=user)
+
+        signer = Signer()
+        value = signer.sign(2)
+        token = base64.urlsafe_b64encode(value.encode('ascii')).decode('utf8')
+
+        response = self.get(f'/api/v1/message-preferences/{token}')
+
+        self.assertHTTP403(response)
+
+    def test_put_message_preferences_by_token(self):
+        user_id = 1
+        user = User.objects.get(pk=user_id)
+        self.client.logout()
+
+        signer = Signer()
+        value = signer.sign(user.pk)
+        token = base64.urlsafe_b64encode(value.encode('ascii')).decode('utf8')
+
+        res = self.get(f'/api/v1/message-preferences/{token}')
+
+        self.assertHTTP200(res)
+        self.validate(res.data, message_preferences)
+        self.assertTrue(res.data['results'][0]['email'])
+
+        res.data['results'][0]['email'] = False
+        res = self.put(f'/api/v1/message-preferences/{token}', res.data)
+        self.assertHTTP200(res)
+        self.validate(res.data, message_preferences)
+        self.assertFalse(res.data['results'][0]['email'])
+
+    def test_put_message_preferences_by_token_while_authenticated(self):
+        user_id = 1
+        user = User.objects.get(pk=user_id)
+        self.client.logout()
+
+        signer = Signer()
+        value = signer.sign(user.pk)
+        token = base64.urlsafe_b64encode(value.encode('ascii')).decode('utf8')
+
+        res = self.get(f'/api/v1/message-preferences/{token}')
+
+        self.assertHTTP200(res)
+        self.validate(res.data, message_preferences)
+        self.assertTrue(res.data['results'][0]['email'])
+
+        res.data['results'][0]['email'] = False
+        res = self.put(f'/api/v1/message-preferences/{token}', res.data)
+        self.assertHTTP200(res)
+        self.validate(res.data, message_preferences)
+        self.assertFalse(res.data['results'][0]['email'])
+
+    def test_put_message_preferences_by_token_while_authenticated_as_different_user(self):
+        user_id = 1
+        user = User.objects.get(pk=user_id)
+        self.client.force_login(user=user)
+
+        signer = Signer()
+        value = signer.sign(2)
+        token = base64.urlsafe_b64encode(value.encode('ascii')).decode('utf8')
+
+        res = self.get(f'/api/v1/message-preferences/{token}')
+
+        self.assertHTTP403(res)
+
+    def test_put_single_message_preference_by_token(self):
+        user_id = 1
+        user = User.objects.get(pk=user_id)
+        self.client.logout()
+
+        signer = Signer()
+        value = signer.sign(user.pk)
+        token = base64.urlsafe_b64encode(value.encode('ascii')).decode('utf8')
+
+        res = self.get(f'/api/v1/message-preferences/{token}')
+
+        self.assertHTTP200(res)
+        self.validate(res.data, message_preferences)
+        self.assertTrue(res.data['results'][0]['email'])
+
+        res = self.put(f'/api/v1/message-preferences/{token}/default/email', False)
+        self.assertHTTP200(res)
+        self.assertFalse(res.data)
+
+    def test_get_single_message_preference_by_token(self):
+        user_id = 1
+        user = User.objects.get(pk=user_id)
+        self.client.logout()
+
+        signer = Signer()
+        value = signer.sign(user.pk)
+        token = base64.urlsafe_b64encode(value.encode('ascii')).decode('utf8')
+
+        res = self.get(f'/api/v1/message-preferences/{token}/default/email')
+
+        self.assertHTTP200(res)
+        self.assertTrue(res.data)
+
+    def test_get_single_message_preference_by_token_while_authenticated(self):
+        user_id = 1
+        user = User.objects.get(pk=user_id)
+        self.client.force_login(user=user)
+
+        signer = Signer()
+        value = signer.sign(user.pk)
+        token = base64.urlsafe_b64encode(value.encode('ascii')).decode('utf8')
+
+        res = self.get(f'/api/v1/message-preferences/{token}/default/email')
+
+        self.assertHTTP200(res)
+
+    def test_get_single_message_preference_by_token_while_authenticated_as_different_user(self):
+        user_id = 1
+        user = User.objects.get(pk=user_id)
+        self.client.force_login(user=user)
+
+        signer = Signer()
+        value = signer.sign(2)
+        token = base64.urlsafe_b64encode(value.encode('ascii')).decode('utf8')
+
+        res = self.get(f'/api/v1/message-preferences/{token}/default/email')
+
+        self.assertHTTP403(res)

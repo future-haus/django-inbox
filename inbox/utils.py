@@ -26,7 +26,7 @@ def process_messages(messages):
         for message in messages:
 
             post_message_get = None
-            if hooks_module:
+            if hooks_module and not message.is_forced:
                 try:
                     post_message_get = import_string(f'{hooks_module}.{message.key}.post_message_get')
                 except (ImportError, ModuleNotFoundError) as e:
@@ -53,7 +53,7 @@ def process_messages(messages):
                 message_log = MessageLog(message=message, medium=medium_enum, send_at=message.send_at)
 
                 pre_message_log_save = None
-                if hooks_module:
+                if hooks_module and not message.is_forced:
                     try:
                         pre_message_log_save = import_string(f'{hooks_module}.{message.key}.pre_message_log_save')
                     except (ImportError, ModuleNotFoundError) as e:
@@ -66,7 +66,7 @@ def process_messages(messages):
                     message_log.save()
 
                 post_message_log_save = None
-                if hooks_module:
+                if hooks_module and not message.is_forced:
                     try:
                         post_message_log_save = import_string(f'{hooks_module}.{message.key}.post_message_log_save')
                     except (ImportError, ModuleNotFoundError):
@@ -80,7 +80,7 @@ def process_messages(messages):
                 message.is_hidden = True
 
             post_message_to_logs = None
-            if hooks_module:
+            if hooks_module and not message.is_forced:
                 try:
                     post_message_to_logs = import_string(f'{hooks_module}.{message.key}.post_message_to_logs')
                 except (ImportError, ModuleNotFoundError) as e:
@@ -108,7 +108,7 @@ def process_new_message_logs():
 def process_message_logs(message_logs):
     with transaction.atomic():
         for message_log in message_logs:
-            if message_log.can_send:
+            if message_log.message.is_forced or message_log.can_send:
                 message_log.status = MessageLogStatus.SENT
                 message_log.send()
 

@@ -3,7 +3,7 @@ from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.urls import include
 
 from inbox.cron import view_process_new_messages, view_process_new_message_logs
-from inbox.views import MessageViewSet, NestedMessagesViewSet
+from inbox.views import MessageViewSet, NestedMessagesViewSet, MessagePreferencesViewSet
 from rest_framework_extensions.routers import ExtendedSimpleRouter
 
 from tests.views import UserViewSet, UserDeviceViewSet, DeviceViewSet
@@ -18,6 +18,8 @@ users_router.register(r'devices', UserDeviceViewSet,
 users_router.register(r'messages', NestedMessagesViewSet, basename='users_messages', parents_query_lookups=['user'])
 
 messages_router = router.register(r'messages', MessageViewSet, basename='messages')
+
+router.register(r'message[-_]preferences', MessagePreferencesViewSet, basename='messagepreferences')
 
 urlpatterns = [
     url(r'^api/(?P<version>v1)/', include(router.urls)),
