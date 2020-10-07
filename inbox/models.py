@@ -48,6 +48,9 @@ class MessageManager(BaseManager.from_queryset(MessageQuerySet)):
         if fail_silently is None:
             fail_silently = inbox_settings.get_config()['MESSAGE_CREATE_FAIL_SILENTLY']
 
+        if 'send_at' in kwargs and kwargs['send_at'] is None:
+            kwargs['send_at'] = Message().send_at
+
         res = None
         try:
             res = super().create(*args, **kwargs)
@@ -231,6 +234,7 @@ class Message(models.Model):
         if is_new:
             if self.is_forced:
                 self.send_at = now
+                self.message_id = Message().message_id
 
             self.subject = self._build_subject()
             self.body = self._build_body_excerpt()

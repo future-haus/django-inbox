@@ -1,5 +1,17 @@
 # Releases
 
+#### 0.4.1 (2020-10-07)
+
+Improvement
+
+- Setting `is_forced=True` on a new Message will now override message_id so that uniqueness isn't taken into account
+allowing the Message to always be created.
+
+Fixes
+
+- Fix issue where if you pass `send_at=None` on Message.objects.create it would fail when it should just default
+to using timezone.now
+
 #### 0.4.0 (2020-10-06)
 
 Features
