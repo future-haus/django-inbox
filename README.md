@@ -219,6 +219,21 @@ existing_message_ids, missing_message_ids = Message.objects.exists(msg_id_1)
 ```python
 existing_message_ids, missing_message_ids = Message.objects.exists([msg_id_1, msg_id_2])
 ```
+
+Signals
+=======
+
+`unread_count`
+
+Fires when number of unread messages changes. Receives one parameter, `count`, the number of
+unread messages.
+
+`message_preferences_changes`
+
+Fires when any message preference group medium changes. Receives `delta` which is structured
+just like message preferences and contains only the groups that contained changes and only
+the mediums that changed with their new/current value.
+
     
 
 Test
