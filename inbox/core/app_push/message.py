@@ -1,13 +1,9 @@
-from django.contrib.auth import get_user_model
-
-User = get_user_model()
-
 
 class AppPushMessage:
 
     message_log = None
 
-    def __init__(self, entity: User, title=None, body=None, data=None, message_log=None, connection=None):
+    def __init__(self, entity, title=None, body=None, data=None, message_log=None, connection=None):
         self.entity = entity
         self.title = title
         self.body = body

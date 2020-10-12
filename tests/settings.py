@@ -93,7 +93,7 @@ INBOX_CONFIG = {
                 "sms": None,
                 "web_push": None
             },
-            'message_keys': ['welcome']
+            'message_keys': ['welcome', 'key_with_no_template']
         },
         {
             'id': 'account_updated',

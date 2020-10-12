@@ -13,7 +13,7 @@ from inbox import settings as inbox_settings
 from inbox import signals
 from inbox.core import app_push
 
-from inbox.models import Message, MessageLog, get_message_groups, get_message_group
+from inbox.models import Message, MessageLog, get_message_groups, get_message_group, MessagePreferences
 from inbox.test.utils import AppPushTestCaseMixin
 from inbox.utils import process_new_messages, process_new_message_logs
 from tests.models import DeviceGroup
@@ -795,3 +795,91 @@ class EndpointTests(AppPushTestCaseMixin, TransactionTestCase):
         res = self.get(f'/api/v1/message-preferences/{token}/default/email')
 
         self.assertHTTP403(res)
+
+    def test_change_single_message_preference_fires_signal(self):
+
+        self.client.force_login(self.user_1)
+
+        handler = MagicMock()
+        signals.message_preferences_changed.connect(handler, sender=MessagePreferences)
+
+        # Case 1
+        # Update default message preference
+        res = self._get_message_preferences(self.user_1.pk)
+        self.validate(res.data, message_preferences)
+        res.data['results'][0]['app_push'] = False
+        response = self.client.put(f'/api/v1/users/{self.user_1.pk}/message_preferences', res.data)
+        self.assertHTTP200(response)
+
+        # Assert the signal was called only once with the args
+        handler.assert_called_once_with(signal=signals.message_preferences_changed,
+                                        delta=[{'id': 'default',
+                                                'label': 'Updates',
+                                                'description': 'General news and updates.',
+                                                'data': {},
+                                                'app_push': False}],
+                                        sender=MessagePreferences)
+
+    def test_change_multiple_message_preference_fires_signal(self):
+
+        self.client.force_login(self.user_1)
+
+        handler = MagicMock()
+        signals.message_preferences_changed.connect(handler, sender=MessagePreferences)
+
+        # Case 1
+        # Update default message preference
+        res = self._get_message_preferences(self.user_1.pk)
+        self.validate(res.data, message_preferences)
+        res.data['results'][0]['app_push'] = False
+        res.data['results'][1]['app_push'] = False
+        response = self.client.put(f'/api/v1/users/{self.user_1.pk}/message_preferences', res.data)
+        self.assertHTTP200(response)
+
+        # Assert the signal was called only once with the args
+        handler.assert_called_once_with(signal=signals.message_preferences_changed,
+                                        delta=[{'id': 'default', 'label': 'Updates', 'description': 'General news and updates.', 'data': {}, 'app_push': False}, {'id': 'account_updated', 'label': 'Account Updated', 'description': 'When you update your account.', 'data': {}, 'app_push': False}],
+                                        sender=MessagePreferences)
+
+    def test_change_multiple_medium_message_preference_fires_signal(self):
+        self.client.force_login(self.user_1)
+
+        handler = MagicMock()
+        signals.message_preferences_changed.connect(handler, sender=MessagePreferences)
+
+        # Case 1
+        # Update default message preference
+        res = self._get_message_preferences(self.user_1.pk)
+        self.validate(res.data, message_preferences)
+        res.data['results'][0]['app_push'] = False
+        res.data['results'][0]['email'] = False
+        response = self.client.put(f'/api/v1/users/{self.user_1.pk}/message_preferences', res.data)
+        self.assertHTTP200(response)
+
+        # Assert the signal was called only once with the args
+        handler.assert_called_once_with(signal=signals.message_preferences_changed,
+                                        delta=[{'id': 'default',
+                                                'label': 'Updates',
+                                                'description': 'General news and updates.',
+                                                'data': {},
+                                                'app_push': False,
+                                                'email': False}],
+                                        sender=MessagePreferences)
+
+    def test_change_zero_message_preference_does_not_fire_signal(self):
+
+        self.client.force_login(self.user_1)
+
+        handler = MagicMock()
+        signals.message_preferences_changed.connect(handler, sender=MessagePreferences)
+
+        # Case 1
+        # Update default message preference
+        res = self._get_message_preferences(self.user_1.pk)
+        self.validate(res.data, message_preferences)
+        res.data['results'][0]['app_push'] = True
+        response = self.client.put(f'/api/v1/users/{self.user_1.pk}/message_preferences', res.data)
+        self.assertHTTP200(response)
+
+        # Assert the signal was called only once with the args
+        handler.assert_not_called()

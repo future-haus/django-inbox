@@ -1,5 +1,17 @@
 # Releases
 
+#### 0.5.0 (2020-10-12)
+
+Features
+
+- Add signal, `message_preferences_changed`, that fires when one or more mediums on any `MessagePreference` group 
+changes value.
+
+Improvements
+
+- When creating a Message, validation error order has changed so that if it's not found in any group
+it throws that error first, then template missing error. These errors are only thrown if fail silently is off.
+
 #### 0.4.1 (2020-10-07)
 
 Improvement

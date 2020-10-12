@@ -88,6 +88,20 @@ class MessageTestCase(AppPushTestCaseMixin, TestCase):
         # Assert the signal was called only once with the args
         handler.assert_called_once_with(signal=signals.unread_count, count=0, sender=Message)
 
+    def test_save_message_with_key_not_in_a_group(self):
+        # We use lru_cache on INBOX_CONFIG, clear it out
+        inbox_settings.get_config.cache_clear()
+        # Then override the INBOX_CONFIG setting, we'll add a new message group and see it we get the expected return
+        INBOX_CONFIG = settings.INBOX_CONFIG.copy()
+        INBOX_CONFIG['MESSAGE_CREATE_FAIL_SILENTLY'] = False
+        with self.settings(INBOX_CONFIG=INBOX_CONFIG):
+            with self.assertRaises(ValidationError) as context:
+                Message.objects.create(user=self.user, key='key_not_in_a_group')
+
+            self.assertTrue('"key_not_in_a_group" does not exist in any group.' in context.exception.messages[0])
+
+        inbox_settings.get_config.cache_clear()
+
     def test_save_message_with_invalid_key(self):
 
         # We use lru_cache on INBOX_CONFIG, clear it out
@@ -97,17 +111,17 @@ class MessageTestCase(AppPushTestCaseMixin, TestCase):
         INBOX_CONFIG['MESSAGE_CREATE_FAIL_SILENTLY'] = False
         with self.settings(INBOX_CONFIG=INBOX_CONFIG):
             with self.assertRaises(ValidationError) as context:
-                Message.objects.create(user=self.user, key='non_existent_key')
+                Message.objects.create(user=self.user, key='key_with_no_template')
 
-            self.assertTrue('Subject template for "non_existent_key" does not exist.' in context.exception.messages[0])
+            self.assertTrue('Subject template for "key_with_no_template" does not exist.' in context.exception.messages[0])
 
         inbox_settings.get_config.cache_clear()
 
         # Verify that you can adjust fail_silently on a per call basis
         with self.assertRaises(ValidationError) as context:
-            Message.objects.create(user=self.user, key='non_existent_key', fail_silently=False)
+            Message.objects.create(user=self.user, key='key_with_no_template', fail_silently=False)
 
-        self.assertTrue('Subject template for "non_existent_key" does not exist.' in context.exception.messages[0])
+        self.assertTrue('Subject template for "key_with_no_template" does not exist.' in context.exception.messages[0])
 
     def test_create_message_verify_log_exists(self):
 

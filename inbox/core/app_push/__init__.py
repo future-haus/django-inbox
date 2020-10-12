@@ -4,7 +4,6 @@ Tools for sending app push.
 from typing import Dict
 
 from django.conf import settings
-from django.contrib.auth import get_user_model
 from django.utils.module_loading import import_string
 
 from inbox.core.app_push.message import AppPushMessage
@@ -12,8 +11,6 @@ from inbox.core.app_push.message import AppPushMessage
 __all__ = [
     'get_connection', 'send_message',
 ]
-
-User = get_user_model()
 
 
 def get_connection(backend=None, fail_silently=False, **kwds):
@@ -28,7 +25,7 @@ def get_connection(backend=None, fail_silently=False, **kwds):
     return klass(fail_silently=fail_silently, **kwds)
 
 
-def send_message(entity: User, title, body: str = '', data: Dict = None, fail_silently=False, connection=None):
+def send_message(entity, title, body: str = '', data: Dict = None, fail_silently=False, connection=None):
     """
     Easy wrapper for sending a single app push to a recipient list. All members
     of the recipient list will see the other recipients in the 'To' field.

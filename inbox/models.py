@@ -25,7 +25,7 @@ from toolz import merge
 from inbox import settings as inbox_settings
 from inbox.constants import MessageMedium, MessageLogStatus, MessageLogFailureReason
 from inbox.core.app_push.message import AppPushMessage
-from inbox.signals import unread_count
+from inbox.signals import unread_count, message_preferences_changed
 from inbox.test.utils import dump_template
 
 User = get_user_model()
@@ -209,7 +209,11 @@ class Message(models.Model):
             self.read_at = timezone.now()
 
     def clean(self):
-        # TODO Verify message key exists in a message group
+        group = self._get_group_from_key()
+        if not group:
+            raise ValidationError({'key': [f'"{self.key}" does not exist in any group.']})
+        else:
+            self.group_id = group['id']
 
         subject_template, body_template = self._get_base_templates()
 
@@ -218,12 +222,6 @@ class Message(models.Model):
 
         if self.key and not body_template:
             raise ValidationError({'key': [f'Body template for "{self.key}" does not exist.',]})
-
-        group = self._get_group_from_key()
-        if not group:
-            raise ValidationError({'key': [f'Message Group not found for "{self.key}".']})
-        else:
-            self.group_id = group['id']
 
     def save(self, *args, **kwargs):
         is_new = not self.id
@@ -736,12 +734,9 @@ class MessagePreferences(models.Model):
 
     def save(self, **kwargs):
 
-        # Get original and compare to know whether we need to sync with Sendgrid
-        changed_message_preference = False
-        groups_changed = []
-        original_message_preference = MessagePreferences.objects.filter(pk=self.pk).first()
+        original_message_preferences = MessagePreferences.objects.filter(pk=self.pk).first()
 
-        if original_message_preference:
+        if original_message_preferences:
             pass
             # TODO Loop over every key in the current preferences, look it up in the original
             #  if it doesn't exist in the original, then it's changed
@@ -753,6 +748,36 @@ class MessagePreferences(models.Model):
 
         super().save(**kwargs)
 
-        # TODO
-        # if changed_message_preference:
-        #     message_preferences_changed.send(sender=self.__class__, groups_changed=groups_changed)
+        changed_message_preferences = self.delta(original_message_preferences) if original_message_preferences else []
+        if changed_message_preferences:
+            message_preferences_changed.send(sender=self.__class__, delta=changed_message_preferences)
+
+    def delta(self, message_preferences):
+        """
+        Return the preferences from self that have different medium values from the `message_preferences`
+
+        :param message_preferences:
+        :return: message_preferences: MessagePreferences
+        """
+        changed_message_preferences = []
+
+        for group in self.groups:
+            original_group = next((g for g in message_preferences.groups if g['id'] == group['id']))
+
+            if not original_group:
+                continue
+
+            new_group = group.copy()
+            mediums = {}
+            for medium in MessageMedium.keys():
+                current = group.get(medium)
+                if current != original_group.get(medium):
+                    mediums.update(**{medium: current})
+                else:
+                    new_group.pop(medium, None)
+
+            if mediums:
+                new_group.update(**mediums)
+                changed_message_preferences.append(new_group)
+
+        return changed_message_preferences

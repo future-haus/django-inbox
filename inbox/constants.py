@@ -1,3 +1,5 @@
+from functools import lru_cache
+
 from django_enumfield import enum
 
 
@@ -14,6 +16,11 @@ class MessageMedium(enum.Enum):
         SMS: 'SMS',
         WEB_PUSH: 'Web Push'
     }
+
+    @classmethod
+    @lru_cache(maxsize=None)
+    def keys(cls):
+        return [item[0].lower() for item in cls.items()]
 
 
 class MessageLogStatus(enum.Enum):

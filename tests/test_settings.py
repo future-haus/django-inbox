@@ -94,7 +94,7 @@ class SettingsTestCase(TestCase):
                         'web_push': None
                     },
                     'data': {},
-                    'message_keys': ['welcome'],
+                    'message_keys': ['welcome', 'key_with_no_template'],
                     'skip_app_push': [],
                     'skip_email': [],
                     'skip_web_push': [],
