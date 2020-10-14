@@ -4,7 +4,6 @@ from django.conf import settings
 
 
 # Fill is used for filling in some fields with sensible defaults
-from toolz import merge
 MESSAGE_GROUP_FILL = {
     'is_preference': True,
     'use_preference': None,
@@ -47,7 +46,11 @@ CONFIG_DEFAULTS = {
     'MESSAGE_CREATE_FAIL_SILENTLY': True,
     'HOOKS_MODULE': None,
     'PROCESS_NEW_MESSAGES_LIMIT': 25,
-    'PROCESS_NEW_MESSAGE_LOGS_LIMIT': 25
+    'PROCESS_NEW_MESSAGE_LOGS_LIMIT': 25,
+    'PER_USER_MESSAGES_MAX_AGE': None,
+    'PER_USER_MESSAGES_MIN_COUNT': None,
+    'PER_USER_MESSAGES_MAX_COUNT': None,
+    'PER_USER_MESSAGES_MIN_AGE': None,
 }
 
 

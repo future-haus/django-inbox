@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.test import TestCase
+from django.utils import timezone
 from faker import Faker
 
 from inbox import settings as inbox_settings
@@ -49,7 +50,11 @@ class SettingsTestCase(TestCase):
             'MESSAGE_CREATE_FAIL_SILENTLY': True,
             'HOOKS_MODULE': None,
             'PROCESS_NEW_MESSAGES_LIMIT': 25,
-            'PROCESS_NEW_MESSAGE_LOGS_LIMIT': 25
+            'PROCESS_NEW_MESSAGE_LOGS_LIMIT': 25,
+            'PER_USER_MESSAGES_MAX_AGE': None,
+            'PER_USER_MESSAGES_MAX_COUNT': None,
+            'PER_USER_MESSAGES_MIN_AGE': None,
+            'PER_USER_MESSAGES_MIN_COUNT': None,
         }
 
         with self.settings(INBOX_CONFIG={}):
@@ -58,6 +63,8 @@ class SettingsTestCase(TestCase):
 
             self.maxDiff = 4096
             self.assertEqual(settings, default_config)
+
+    def test_test_app_settings(self):
 
         test_app_config = {
             # Message groups are used to organize the messages and provide preferences and their defaults
@@ -227,7 +234,11 @@ class SettingsTestCase(TestCase):
             'MESSAGE_CREATE_FAIL_SILENTLY': True,
             'HOOKS_MODULE': 'tests.hooks',
             'PROCESS_NEW_MESSAGES_LIMIT': 25,
-            'PROCESS_NEW_MESSAGE_LOGS_LIMIT': 25
+            'PROCESS_NEW_MESSAGE_LOGS_LIMIT': 25,
+            'PER_USER_MESSAGES_MAX_AGE': None,
+            'PER_USER_MESSAGES_MAX_COUNT': None,
+            'PER_USER_MESSAGES_MIN_AGE': None,
+            'PER_USER_MESSAGES_MIN_COUNT': None,
         }
 
         inbox_settings.get_config.cache_clear()

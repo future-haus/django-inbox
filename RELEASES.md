@@ -1,11 +1,20 @@
 # Releases
 
+#### 0.6.0 (2020-10-xx)
+
+Features
+
+- Add configuration to perform maintenance of deleting older user messages based on min/max count per user and/or
+age of message. If a message has a message_id, which many times is used to prevent future messages of the same
+being sent then they are left and hidden from the user.
+
 #### 0.5.1 (2020-10-14)
 
 Improvements
 
 - No longer use uuid4 as default value when message_id isn't specified for a Message. New default is `NULL`
 allowing you to clearly distinguish Messages that had message_id intentionally set vs not.
+=======
 
 #### 0.5.0 (2020-10-12)
 

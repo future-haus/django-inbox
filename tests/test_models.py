@@ -35,6 +35,8 @@ class MessageTestCase(AppPushTestCaseMixin, TestCase):
         self.user.device_group.notification_key = 'fake-notification_key'
         self.user.device_group.save()
 
+        inbox_settings.get_config.cache_clear()
+
     def test_can_save_message(self):
 
         message = Message.objects.create(user=self.user, key='default')
@@ -439,3 +441,15 @@ class MessageTestCase(AppPushTestCaseMixin, TestCase):
 
         message_2 = Message.objects.get(pk=message_2.pk)
         self.assertEqual(message_2.message_id, 'placebo')
+
+    def test_maintenance_max_age(self):
+
+        messages = Message.objects.filter(user=self.user)
+
+        self.assertEqual(len(messages), 0)
+
+        Message.objects.create(user=self.user, key='default', fail_silently=False)
+
+        messages = Message.objects.filter(user=self.user)
+
+        self.assertEqual(len(messages), 1)

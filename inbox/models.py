@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import uuid
+from enum import Enum
 from functools import lru_cache
 from typing import List, Union, Tuple, Set
 
@@ -14,7 +15,7 @@ from django.core import exceptions
 from django.core.exceptions import ValidationError
 from django.core.mail import EmailMessage
 from django.db import models
-from django.db.models import UniqueConstraint
+from django.db.models import UniqueConstraint, Q
 from django.db.models.manager import BaseManager
 from django.template import loader, TemplateDoesNotExist
 from django.utils import timezone
@@ -38,7 +39,7 @@ class MessageQuerySet(models.QuerySet):
 
     def live(self):
         now = timezone.now()
-        return self.filter(send_at__lte=now, is_hidden=False, deleted_at__isnull=True)
+        return self.filter(send_at__lte=now, is_hidden=False, deleted_at__isnull=True, is_logged=True)
 
 
 class MessageManager(BaseManager.from_queryset(MessageQuerySet)):
@@ -138,6 +139,62 @@ def default_message_id():
     return str(uuid.uuid4())
 
 
+def perform_user_maintenance(user: User):
+    """
+    Supports:
+    * max_age
+    * max_age + min_count
+    * max_age + min_count + max_count
+    * max_age + min_count + max_count + min_age
+    * max_age + max_count
+    * max_age + max_count + min_age
+    * max_count
+    * max_count + min_age
+
+    Ignores max_age if min_count is not defined.
+    Ignores max_count if min_age is not defined.
+
+    :param user:
+    :return: None
+    """
+
+    max_age = inbox_settings.get_config()['PER_USER_MESSAGES_MAX_AGE']
+    min_count = inbox_settings.get_config()['PER_USER_MESSAGES_MIN_COUNT']
+    max_count = inbox_settings.get_config()['PER_USER_MESSAGES_MAX_COUNT']
+    min_age = inbox_settings.get_config()['PER_USER_MESSAGES_MIN_AGE']
+
+    if not any((max_age, min_count, max_count, min_age)):
+        return
+
+    now = timezone.now()
+
+    messages = Message.objects.filter(user=user).live()
+
+    max_age_at = now - max_age if max_age else None
+    min_age_at = now - min_age if min_age else None
+
+    for k, message in enumerate(messages):
+        if min_count and k < min_count:
+            continue
+
+        if max_age_at and message.send_at < max_age_at:
+            message.delete(reason=MessageDeleteReason.MAINTENANCE)
+            continue
+
+        if min_age_at and message.send_at >= min_age_at:
+            continue
+
+        if max_count and k >= max_count:
+            message.delete(reason=MessageDeleteReason.MAINTENANCE)
+            continue
+
+
+class MessageDeleteReason(Enum):
+    SOFT = 1
+    FORCE = 2
+    MAINTENANCE = 3
+
+
 class Message(models.Model):
 
     class Meta:
@@ -229,6 +286,7 @@ class Message(models.Model):
 
         now = timezone.now()
         send_unread_count = False
+        perform_maintenance = False
         if is_new:
             if self.is_forced:
                 self.send_at = now
@@ -239,6 +297,7 @@ class Message(models.Model):
         else:
             if self.is_logged and now >= self.send_at:
                 send_unread_count = True
+                perform_maintenance = True
 
         super().save(*args, **kwargs)
 
@@ -246,8 +305,11 @@ class Message(models.Model):
         if send_unread_count:
             self._send_unread_count()
 
-    def delete(self, using=None, keep_parents=False, force=False):
-        if force:
+        if perform_maintenance:
+            perform_user_maintenance(self.user)
+
+    def delete(self, using=None, keep_parents=False, reason=MessageDeleteReason.SOFT):
+        if reason == MessageDeleteReason.FORCE or (reason == MessageDeleteReason.MAINTENANCE and not self.message_id):
             super().delete(using=using, keep_parents=keep_parents)
         else:
             self.deleted_at = timezone.now()

@@ -59,11 +59,33 @@ INBOX_CONFIG = {
     'HOOKS_MODULE': None  # Supports post_message_get, pre_message_log_save, post_message_log_save, and post_message_to_logs
     'PROCESS_NEW_MESSAGES_LIMIT': 25,  # Default limit for processing new messages
     'PROCESS_NEW_MESSAGE_LOGS_LIMIT': 25  # Default limit for processing new message logs
+    'PER_USER_MESSAGES_MAX_AGE': None,  # timedelta, Maximum age of a message for when it's available for maintenance cleanup
+    'PER_USER_MESSAGES_MIN_COUNT': None,  # integer, Used to bound max age if desired, only has an effect if max age is set
+    'PER_USER_MESSAGES_MAX_COUNT': None,  # integer, Maximum count used, when messages exceed this they are available for maintenance cleanup
+    'PER_USER_MESSAGES_MIN_AGE': None,  # timedelta, Used to bound max count, if desired, only has an effect if max count is set
 }
 ```
 
 Setting a `preference_default` medium to `None` disables it from being returned in the API or used as an option. Setting 
 it to `False` means you want the UI to present it as "off" by default.
+
+The `PER_USER_MESSAGES_*` are used to control the growth of the Inbox Message and MessageLog. If your usage is one
+where a `User` viewing old Messages is unlikely, or not useful even if they can, then you may want to set limits to how
+long, or how many, are kept around. When setting the `PER_USER_MESSAGES_*` settings you don't have to use all four 
+settings, you can use any of the following combinations:
+
+- max_age
+- max_age + min_count
+- max_age + min_count + max_count
+- max_age + min_count + max_count + min_age
+- max_age + max_count
+- max_age + max_count + min_age
+- max_count
+- max_count + min_age
+
+You can also leave them as None and no maintenance cleanup is ever done, retaining messages indefinitely. If a Message
+has a set message_id, it is left but marked as deleted so as to not show to the user and match the behavior
+of the other messages that are removed but left intact incase the message id is also being used as de-duplication.
 
 You can leave off `is_preference`, `use_preference`, and `preference_defaults` if you're good with the above defaults. 
 The above example could look like this and get the same result:
@@ -198,7 +220,11 @@ Message.objects.create(user=user, key='example_message_key')
 
 Use a message_id if you need to be able to track whether you've sent a message before (eg did we send this user their
 morning reminder to drink coffee on Mon, Aug 8, 2010?). A message id is only unique to a user, no need to interpolate
-user_id into the message_id to enforce uniqueness across users.
+user_id into the message_id to enforce uniqueness across users. They should really only be used if you're unable
+to determine whether a message was sent from the message key, date sent, user, etc alone. The primary purposes is to
+prevent duplicate messages from being created and it's the only way you're able to accomplish that reasonably. If you're
+also wanting to take advantage of message maintenace feature using the `PER_USER_MESSAGES_*` settings, any
+`Message` that has a message_id is not removed and is left, thereby not clearing up space.
 
 ```python
 Message.objects.create(user=user, key='morning_coffee_reminder', message_id=f'mcr_20100808')
