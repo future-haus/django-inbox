@@ -1,5 +1,12 @@
 # Releases
 
+#### 0.5.1 (2020-10-14)
+
+Improvements
+
+- No longer use uuid4 as default value when message_id isn't specified for a Message. New default is `NULL`
+allowing you to clearly distinguish Messages that had message_id intentionally set vs not.
+
 #### 0.5.0 (2020-10-12)
 
 Features

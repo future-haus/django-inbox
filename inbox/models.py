@@ -166,7 +166,7 @@ class Message(models.Model):
                                ' notifications.')
     data_email = JSONField(blank=True, db_index=True, null=True,
                            help_text='Arbitrary data that is included with data when creating email templates.')
-    message_id = models.CharField(db_index=True, max_length=255, default=default_message_id,
+    message_id = models.CharField(db_index=True, max_length=255, null=True, blank=True,
                                   help_text='Explicitly specifying a message id enables message de-duplication '
                                             'per user.')
     group_id = models.CharField(db_index=True, default=get_message_group_default(), max_length=255,
@@ -232,7 +232,7 @@ class Message(models.Model):
         if is_new:
             if self.is_forced:
                 self.send_at = now
-                self.message_id = Message().message_id
+                self.message_id = None
 
             self.subject = self._build_subject()
             self.body = self._build_body_excerpt()

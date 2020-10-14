@@ -1,5 +1,7 @@
+import uuid
 from unittest.mock import MagicMock
 
+from django.apps import apps
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core import mail
@@ -13,7 +15,6 @@ from inbox import settings as inbox_settings
 from inbox import signals
 from inbox.constants import MessageLogStatus, MessageLogFailureReason
 from inbox.core import app_push
-
 from inbox.models import Message, MessageMedium, MessageLog
 from inbox.test.utils import AppPushTestCaseMixin
 from inbox.utils import process_new_messages, process_new_message_logs
@@ -41,6 +42,28 @@ class MessageTestCase(AppPushTestCaseMixin, TestCase):
         self.assertEqual(message.user.email, self.user.email)
         self.assertEqual(message.group, {'id': 'default', 'label': 'Updates', 'data': {}})
         self.assertEqual(message.key, 'default')
+
+    def test_cannot_save_message_with_same_message_id_more_than_once(self):
+
+        message = Message.objects.create(user=self.user, key='default', message_id='test', fail_silently=False)
+
+        self.assertEqual(message.user.email, self.user.email)
+        self.assertEqual(message.group, {'id': 'default', 'label': 'Updates', 'data': {}})
+        self.assertEqual(message.key, 'default')
+
+        with self.assertRaises(ValidationError) as context:
+            Message.objects.create(user=self.user, key='default', message_id='test', fail_silently=False)
+
+    def test_can_save_multiple_messages_with_null_message_id(self):
+
+        message = Message.objects.create(user=self.user, key='default', fail_silently=False)
+
+        self.assertEqual(message.user.email, self.user.email)
+        self.assertEqual(message.group, {'id': 'default', 'label': 'Updates', 'data': {}})
+        self.assertEqual(message.key, 'default')
+        self.assertIsNone(message.message_id)
+
+        Message.objects.create(user=self.user, key='default', fail_silently=False)
 
     def test_unread_count_signal_gets_proper_data(self):
         handler = MagicMock()
@@ -379,3 +402,40 @@ class MessageTestCase(AppPushTestCaseMixin, TestCase):
         self.assertTrue(message.is_logged)
         self.assertEqual(message.subject, 'Welcome to Django Inbox')
         self.assertEqual(message.body, 'Django Inbox is a library, welcome.')
+
+    def test_legacy_uuid4_message_id_clearing(self):
+        """
+        We previously stored unset message_id as uuid4, but we wanted a better way to lookup which messages had no
+        message id set without adding a field, so switched to storing as null. This method just verified that Django
+        is accurate at looking up uuid4 by pattern and setting to null so that our migration to the new null method
+        can be successful.
+        :return:
+        """
+        inbox = __import__('inbox')
+        clear_message_id_uuid4 = getattr(inbox.migrations, '0009_message_id_default_clear_prev_uuid4').clear_message_id_uuid4
+
+        uuid4 = uuid.uuid4()
+
+        message = Message.objects.create(user=self.user, key='default', message_id=uuid4, fail_silently=False)
+
+        # Insert a second message that isn't uuid4 so that we can make sure it isn't cleared out
+        message_2 = Message.objects.create(user=self.user, key='default', message_id='placebo', fail_silently=False)
+
+        self.assertEqual(message.message_id, str(uuid4))
+        print(uuid4)
+
+        message = Message.objects.filter(message_id__iregex=r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}').first()
+
+        message = Message.objects.get(pk=message.pk)
+        self.assertEqual(message.message_id, str(uuid4))
+
+        message_2 = Message.objects.get(pk=message_2.pk)
+        self.assertEqual(message_2.message_id, 'placebo')
+
+        clear_message_id_uuid4(apps, None)
+
+        message = Message.objects.get(pk=message.pk)
+        self.assertIsNone(message.message_id)
+
+        message_2 = Message.objects.get(pk=message_2.pk)
+        self.assertEqual(message_2.message_id, 'placebo')
