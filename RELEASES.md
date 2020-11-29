@@ -1,6 +1,14 @@
 # Releases
 
-#### 0.6.0 (2020-10-xx)
+#### 0.6.1 (2020-11-29)
+
+Improvements
+
+- Remove index on Message.body because this will generally be a large amount of text and if you want to search it
+the more correct approach would be to use full text indexing or a separate search engine. With the index in place,
+the field was limited based on the database engine being used and it's max size for indexing.
+
+#### 0.6.0 (2020-10-14)
 
 Features
 

@@ -214,7 +214,7 @@ class Message(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='messages')
     key = models.CharField(max_length=255, db_index=True)
     subject = models.TextField(blank=True, db_index=True, null=True)
-    body = models.TextField(blank=True, db_index=True, null=True)
+    body = models.TextField(blank=True, db_index=False, null=True)
     data = JSONField(blank=True, db_index=True, null=True,
                      help_text='Arbitrary data that can be used by consuming '
                                ' clients/signal listeners as needed (eg needing'
