@@ -1,4 +1,5 @@
 import os
+import codecs
 
 from inbox import settings as inbox_settings
 from inbox.core import app_push
@@ -16,7 +17,7 @@ def dump_template(filename, content):
         except:
             pass
 
-    with open(full_filename, 'w') as fp:
+    with codecs.open(full_filename, 'w', encoding='utf8') as fp:
         fp.write(content)
 
 
