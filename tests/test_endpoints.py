@@ -14,7 +14,7 @@ from inbox import signals
 from inbox.core import app_push
 
 from inbox.models import Message, MessageLog, get_message_groups, get_message_group, MessagePreferences
-from inbox.test.utils import AppPushTestCaseMixin
+from inbox.test.utils import InboxTestCaseMixin
 from inbox.utils import process_new_messages, process_new_message_logs
 from tests.models import DeviceGroup
 from tests.schema import message_preferences, messages, message, unread_count
@@ -23,7 +23,7 @@ from tests.test import TransactionTestCase
 User = get_user_model()
 
 
-class EndpointTests(AppPushTestCaseMixin, TransactionTestCase):
+class EndpointTests(InboxTestCaseMixin, TransactionTestCase):
     fixtures = ['users']
 
     def setUp(self):

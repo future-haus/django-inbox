@@ -9,7 +9,7 @@ from freezegun import freeze_time
 
 from inbox import settings as inbox_settings
 from inbox.models import Message
-from inbox.test.utils import AppPushTestCaseMixin
+from inbox.test.utils import InboxTestCaseMixin
 from inbox.utils import process_new_messages, process_new_message_logs
 
 User = get_user_model()
@@ -17,7 +17,7 @@ Faker.seed()
 fake = Faker()
 
 
-class MaintenanceTestCase(AppPushTestCaseMixin, TestCase):
+class MaintenanceTestCase(InboxTestCaseMixin, TestCase):
 
     user = None
 

@@ -1,5 +1,15 @@
 # Releases
 
+#### 0.7.0 (2020-12-10)
+
+Improvements
+
+- Unify around single TestCaseMixin for Inbox related asserts and setup/teardown of app push outbox.
+
+Fixes
+
+- Writing of templates when running template output in testing would fail under Windows, this has been resolved.
+
 #### 0.6.1 (2020-11-29)
 
 Improvements

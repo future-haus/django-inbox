@@ -16,7 +16,7 @@ from inbox import signals
 from inbox.constants import MessageLogStatus, MessageLogFailureReason
 from inbox.core import app_push
 from inbox.models import Message, MessageMedium, MessageLog
-from inbox.test.utils import AppPushTestCaseMixin
+from inbox.test.utils import InboxTestCaseMixin
 from inbox.utils import process_new_messages, process_new_message_logs
 
 User = get_user_model()
@@ -24,7 +24,7 @@ Faker.seed()
 fake = Faker()
 
 
-class MessageTestCase(AppPushTestCaseMixin, TestCase):
+class MessageTestCase(InboxTestCaseMixin, TestCase):
 
     user = None
 

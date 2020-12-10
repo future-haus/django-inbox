@@ -13,14 +13,14 @@ from inbox.constants import MessageLogStatus
 from inbox.core import app_push
 from inbox.core.app_push import AppPushMessage
 from inbox.models import Message
-from inbox.test.utils import AppPushTestCaseMixin
+from inbox.test.utils import InboxTestCaseMixin
 from inbox.utils import process_new_messages, process_new_message_logs
 
 User = get_user_model()
 fake = Faker()
 
 
-class FirebaseAppPushBackendTestCase(AppPushTestCaseMixin, TransactionTestCase):
+class FirebaseAppPushBackendTestCase(InboxTestCaseMixin, TransactionTestCase):
 
     user = None
 

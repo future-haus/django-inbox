@@ -27,7 +27,6 @@ from inbox import settings as inbox_settings
 from inbox.constants import MessageMedium, MessageLogStatus, MessageLogFailureReason
 from inbox.core.app_push.message import AppPushMessage
 from inbox.signals import unread_count, message_preferences_changed
-from inbox.test.utils import dump_template
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -548,6 +547,7 @@ class MessageLog(models.Model):
         subject = template.render(context)
 
         if settings.INBOX_CONFIG['TESTING_MEDIUM_OUTPUT_PATH']:
+            from inbox.test.utils import dump_template
             dump_template(template.template.name, subject)
 
         return ''.join(subject.splitlines())

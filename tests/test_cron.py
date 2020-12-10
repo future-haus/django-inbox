@@ -5,14 +5,14 @@ from faker import Faker
 
 from inbox.core import app_push
 from inbox.models import Message, MessageLog
-from inbox.test.utils import AppPushTestCaseMixin
+from inbox.test.utils import InboxTestCaseMixin
 from tests.test import TransactionTestCase
 
 User = get_user_model()
 fake = Faker()
 
 
-class CronTestCase(AppPushTestCaseMixin, TransactionTestCase):
+class CronTestCase(InboxTestCaseMixin, TransactionTestCase):
 
     user = None
 
