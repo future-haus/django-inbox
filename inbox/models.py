@@ -595,6 +595,7 @@ class MessageLog(models.Model):
         body = template.render(context)
 
         if settings.INBOX_CONFIG['TESTING_MEDIUM_OUTPUT_PATH']:
+            from inbox.test.utils import dump_template
             dump_template(template.template.name, body)
 
         return body
