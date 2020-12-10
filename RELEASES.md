@@ -5,6 +5,7 @@
 Improvements
 
 - Unify around single TestCaseMixin for Inbox related asserts and setup/teardown of app push outbox.
+If you're using the older AppPushTestCaseMixin you should transition to the new one.
 
 Fixes
 
