@@ -584,7 +584,7 @@ class MessageLog(models.Model):
         try:
             template = loader.select_template(self._get_body_template_names(self.message.key, self.medium))
         except TemplateDoesNotExist:
-            raise ValidationError({'key': [f'Subject template for "{self.message.key}/{self.medium}" does not exist.']})
+            raise ValidationError({'key': [f'Subject template for "{self.message.key}/{self.medium.name.lower()}" does not exist.']})
 
         autoescape = True
         if template.origin.template_name.endswith('txt'):
