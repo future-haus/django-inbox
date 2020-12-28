@@ -534,7 +534,7 @@ class MessageLog(models.Model):
         try:
             template = loader.select_template(self._get_subject_template_names(self.message.key, self.medium))
         except TemplateDoesNotExist:
-            raise ValidationError({'key': [f'Subject template for "{self.message.key}/{self.medium.name}" '
+            raise ValidationError({'key': [f'Subject template for "{self.message.key}/{self.medium.name.lower()}" '
                                            f'does not exist.']})
 
         context = self._get_context_for_template()

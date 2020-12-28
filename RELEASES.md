@@ -1,5 +1,11 @@
 # Releases
 
+#### 0.7.1 (2020-12-28)
+
+Fixes
+
+- Broken error message when missing a template in a particular case.
+
 #### 0.7.0 (2020-12-10)
 
 Improvements
