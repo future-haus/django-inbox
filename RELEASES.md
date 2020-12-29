@@ -1,5 +1,11 @@
 # Releases
 
+#### 0.7.2 (2020-12-29)
+
+Changes
+
+- Bump requirement on Django to include 3.1
+
 #### 0.7.1 (2020-12-28)
 
 Fixes
