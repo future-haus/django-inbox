@@ -20,8 +20,14 @@ REQUIRES_PYTHON = '>=3.7'
 VERSION = '0.7.0'
 
 REQUIRED = [
-    'django>=2.2,<3.1', 'django-annoying', 'django_enumfield>=2.0.0', 'djangorestframework', 'jsonschema',
-    'drf-extensions', 'toolz', 'psycopg2-binary'
+    'django>=2.2,<3.2',
+    'django-annoying',
+    'django_enumfield>=2.0.0',
+    'djangorestframework',
+    'jsonschema',
+    'drf-extensions',
+    'toolz',
+    'psycopg2-binary'
 ]
 
 EXTRAS = {
@@ -29,8 +35,16 @@ EXTRAS = {
 }
 
 TESTS_REQUIRE = [
-    'coverage', 'Faker', 'django-annoying', 'responses', 'djangorestframework-simplejwt', 'hashids==1.2.0',
-    'freezegun', 'twine', 'beautifultable', 'pyfcm==1.4.7'
+    'coverage',
+    'Faker',
+    'django-annoying',
+    'responses',
+    'djangorestframework-simplejwt',
+    'hashids==1.2.0',
+    'freezegun',
+    'twine',
+    'beautifultable',
+    'pyfcm==1.4.7'
 ]
 
 # The rest you shouldn't have to touch too much :)
