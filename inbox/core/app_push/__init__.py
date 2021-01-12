@@ -3,9 +3,9 @@ Tools for sending app push.
 """
 from typing import Dict
 
-from django.conf import settings
 from django.utils.module_loading import import_string
 
+from inbox import settings as inbox_settings
 from inbox.core.app_push.message import AppPushMessage
 
 __all__ = [
@@ -21,7 +21,7 @@ def get_connection(backend=None, fail_silently=False, **kwds):
     Both fail_silently and other keyword arguments are used in the
     constructor of the backend.
     """
-    klass = import_string(backend or settings.INBOX_CONFIG['BACKENDS']['APP_PUSH'])
+    klass = import_string(backend or inbox_settings.get_config()['BACKENDS']['APP_PUSH'])
     return klass(fail_silently=fail_silently, **kwds)
 
 

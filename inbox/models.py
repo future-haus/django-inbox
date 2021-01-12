@@ -546,7 +546,7 @@ class MessageLog(models.Model):
         template.backend.engine.autoescape = autoescape
         subject = template.render(context)
 
-        if settings.INBOX_CONFIG['TESTING_MEDIUM_OUTPUT_PATH']:
+        if inbox_settings.get_config()['TESTING_MEDIUM_OUTPUT_PATH']:
             from inbox.test.utils import dump_template
             dump_template(template.template.name, subject)
 
@@ -594,7 +594,7 @@ class MessageLog(models.Model):
         template.backend.engine.autoescape = autoescape
         body = template.render(context)
 
-        if settings.INBOX_CONFIG['TESTING_MEDIUM_OUTPUT_PATH']:
+        if inbox_settings.get_config()['TESTING_MEDIUM_OUTPUT_PATH']:
             from inbox.test.utils import dump_template
             dump_template(template.template.name, body)
 

@@ -1,5 +1,12 @@
 # Releases
 
+#### 0.7.3 (2021-01-12)
+
+Fixes
+
+- Fixes a few spots where we were incorrectly referencing settings values directly instead of 
+  through config helper that loads defaults merged with project settings.
+
 #### 0.7.2 (2020-12-29)
 
 Changes

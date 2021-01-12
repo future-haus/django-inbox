@@ -2,8 +2,7 @@ import json
 from typing import List
 import logging
 
-from django.conf import settings
-
+from inbox import settings as inbox_settings
 from inbox.constants import MessageLogStatus
 from inbox.core.app_push.backends.base import BaseAppPushBackend
 from inbox.core.app_push.message import AppPushMessage
@@ -23,7 +22,7 @@ class AppPushBackend(BaseAppPushBackend):
         self.dry_run = dry_run
 
         self.fcm = FCMNotification(
-            api_key=settings.INBOX_CONFIG['BACKENDS']['APP_PUSH_CONFIG']['GOOGLE_FCM_SERVER_KEY']
+            api_key=inbox_settings.get_config()['BACKENDS']['APP_PUSH_CONFIG']['GOOGLE_FCM_SERVER_KEY']
         )
 
     def send_messages(self, messages: List[AppPushMessage]):
