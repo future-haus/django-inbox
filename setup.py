@@ -17,7 +17,7 @@ URL = 'http://www.futurehaus.com/'
 EMAIL = 'jt@futurehaus.com'
 AUTHOR = 'Josh Turmel'
 REQUIRES_PYTHON = '>=3.7'
-VERSION = '0.7.3'
+VERSION = '0.7.4'
 
 REQUIRED = [
     'django>=2.2,<3.2',
@@ -31,7 +31,8 @@ REQUIRED = [
 ]
 
 EXTRAS = {
-    'app_push_firebase': ['pyfcm<=2.0.0']
+    'app_push_firebase': ['pyfcm<=2.0.0'],
+    'admin_commands': ['beautifultable']
 }
 
 TESTS_REQUIRE = [

@@ -1,5 +1,13 @@
 # Releases
 
+#### 0.7.4 (2021-01-14)
+
+Fixes
+
+- Add extras option during install to specify `admin_commands` that will install dependencies needed
+  to support the admin commands included but aren't necessary in production environments.
+  `pip install django-inbox[admin_commands]`
+
 #### 0.7.3 (2021-01-12)
 
 Fixes
