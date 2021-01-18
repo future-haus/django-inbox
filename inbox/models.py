@@ -10,7 +10,7 @@ from typing import List, Union, Tuple, Set
 from annoying.fields import AutoOneToOneField
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.postgres.fields import JSONField
+from django.db.models import JSONField
 from django.core import exceptions
 from django.core.exceptions import ValidationError
 from django.core.mail import EmailMessage
