@@ -2,7 +2,7 @@
 
 import annoying.fields
 from django.conf import settings
-import django.contrib.postgres.fields.jsonb
+import django.db.models
 from django.db import migrations, models
 import django.db.models.deletion
 import django.utils.timezone
@@ -29,7 +29,7 @@ class Migration(migrations.Migration):
                 ('subject', models.TextField(blank=True, db_index=True, null=True)),
                 ('body', models.TextField(blank=True, db_index=True, null=True)),
                 ('link', models.URLField(blank=True, null=True)),
-                ('data', django.contrib.postgres.fields.jsonb.JSONField(blank=True, db_index=True, help_text='Arbitrary data that can be used by consuming  clients/signal listeners as needed (eg needing extra data to pass with Gmail emails for actions, extra data for push notifications for interactive notifications.', null=True)),
+                ('data', django.db.models.JSONField(blank=True, db_index=True, help_text='Arbitrary data that can be used by consuming  clients/signal listeners as needed (eg needing extra data to pass with Gmail emails for actions, extra data for push notifications for interactive notifications.', null=True)),
                 ('message_id', models.CharField(db_index=True, default=inbox.models.default_message_id, help_text='Explicitly specifying a message id enables message de-duplication per user.', max_length=255)),
                 ('group', models.CharField(db_index=True, default='default', max_length=255, validators=[inbox.models.validate_group])),
                 ('is_hidden', models.BooleanField(default=False, help_text="There may be cases you want to generate a message so that it can trigger communication in other channels but you don't want it to show up in the user's inbox, set this flag to true.")),
