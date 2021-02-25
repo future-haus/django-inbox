@@ -8,9 +8,7 @@ from functools import lru_cache
 from typing import List, Union, Tuple, Set
 
 from annoying.fields import AutoOneToOneField
-from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.db.models import JSONField
 from django.core import exceptions
 from django.core.exceptions import ValidationError
 from django.core.mail import EmailMessage
@@ -22,6 +20,12 @@ from django.utils import timezone
 from django_enumfield import enum
 from jsonschema import validate, exceptions as jsonschema_exceptions
 from toolz import merge
+import django
+
+if django.VERSION >= (3, 1):
+    from django.db.models import JSONField
+else:
+    from django.contrib.postgres.fields import JSONField
 
 from inbox import settings as inbox_settings
 from inbox.constants import MessageMedium, MessageLogStatus, MessageLogFailureReason

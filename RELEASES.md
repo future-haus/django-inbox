@@ -1,5 +1,12 @@
 # Releases
 
+#### 0.8.0 (2021-02-25)
+
+Changes
+
+- Changes for Django deprecations that are upcoming
+- For Django 3.1 and newer use the new generic JSONField
+
 #### 0.7.4 (2021-01-14)
 
 Fixes
