@@ -1,5 +1,11 @@
 # Releases
 
+#### 0.8.1 (2021-03-24)
+
+Improvements
+
+- Optimizing indexes for send_at on the message table
+
 #### 0.8.0 (2021-02-25)
 
 Changes
