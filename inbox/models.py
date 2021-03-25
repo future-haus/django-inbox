@@ -235,7 +235,7 @@ class Message(models.Model):
                                                              "that it can trigger communication in other channels but "
                                                              "you don't want it to show up in the user's inbox, set "
                                                              "this flag to true.")
-    send_at = models.DateTimeField(db_index=True, default=timezone.now)
+    send_at = models.DateTimeField(default=timezone.now)
     is_logged = models.BooleanField(default=False)
     is_forced = models.BooleanField(default=False)
     read_at = models.DateTimeField(blank=True, db_index=True, null=True, verbose_name='Marked Read At')
