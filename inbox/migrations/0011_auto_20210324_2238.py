@@ -12,13 +12,13 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunSQL('CREATE INDEX CONCURRENTLY inbox_message_send_at '
-                          'ON inbox_message (send_at) WHERE is_logged = FALSE;'),
         migrations.AlterField(
             model_name='message',
             name='send_at',
             field=models.DateTimeField(default=django.utils.timezone.now),
         ),
+        migrations.RunSQL('CREATE INDEX CONCURRENTLY inbox_message_send_at '
+                          'ON inbox_message (send_at) WHERE is_logged = FALSE;'),
         migrations.RunSQL('CREATE INDEX CONCURRENTLY inbox_message_user_send_at_desc '
                           'ON inbox_message (user_id, send_at DESC);'),
     ]

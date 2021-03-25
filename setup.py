@@ -17,7 +17,7 @@ URL = 'http://www.futurehaus.com/'
 EMAIL = 'jt@futurehaus.com'
 AUTHOR = 'Josh Turmel'
 REQUIRES_PYTHON = '>=3.7'
-VERSION = '0.8.1'
+VERSION = '0.8.2'
 
 REQUIRED = [
     'django>=2.2,<3.2',

@@ -1,5 +1,12 @@
 # Releases
 
+#### 0.8.2 (2021-03-25)
+
+Improvements
+
+- Previous index improvement was applied in wrong order causing one of the
+  new index to not even be created.
+
 #### 0.8.1 (2021-03-24)
 
 Improvements
