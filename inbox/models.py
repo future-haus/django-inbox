@@ -543,11 +543,8 @@ class MessageLog(models.Model):
 
         context = self._get_context_for_template()
 
-        autoescape = True
-        if template.origin.template_name.endswith('txt'):
-            autoescape = False
-
-        template.backend.engine.autoescape = autoescape
+        # We will turn off escaping for rendering the Subject
+        template.backend.engine.autoescape = False
         subject = template.render(context)
 
         if inbox_settings.get_config()['TESTING_MEDIUM_OUTPUT_PATH']:
