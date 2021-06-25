@@ -17,6 +17,7 @@ from django.db.models import UniqueConstraint, Q
 from django.db.models.manager import BaseManager
 from django.template import loader, TemplateDoesNotExist
 from django.utils import timezone
+from django.utils.module_loading import import_string
 from django_enumfield import enum
 from jsonschema import validate, exceptions as jsonschema_exceptions
 from toolz import merge
@@ -36,6 +37,7 @@ User = get_user_model()
 logger = logging.getLogger(__name__)
 
 MEDIUMS = ('app_push', 'email', 'sms', 'web_push',)  # TODO Consolidate by using the enum below
+hooks_module = inbox_settings.get_config()['HOOKS_MODULE']
 
 
 class MessageQuerySet(models.QuerySet):
@@ -454,6 +456,15 @@ class MessageLog(models.Model):
     def can_send(self):
         user = self.message.user
         message_group = self.message.group
+
+        can_send_hook = None
+        try:
+            can_send_hook = import_string(f'{hooks_module}.{self.message.key}.can_send')
+        except (ImportError, ModuleNotFoundError) as e:
+            pass
+
+        if can_send_hook:
+            return bool(can_send_hook(self))
 
         if self.medium == MessageMedium.APP_PUSH:
             if not user.notification_key:
