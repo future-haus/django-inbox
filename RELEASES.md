@@ -1,5 +1,14 @@
 # Releases
 
+#### 0.8.3 (2021-06-28)
+
+Improvements
+
+- Ability to specify hooks for overriding the `can_send` method and portions thereof using `can_send_{medium}` for 
+  specific message keys. Ex: Create a method in the message key's hook file called
+  `can_send` or `can_send_email` and return a boolean on whether the message should
+  be allowed to be sent.
+
 #### 0.8.2 (2021-03-25)
 
 Improvements
