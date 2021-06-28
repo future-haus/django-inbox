@@ -17,6 +17,7 @@ from django.db.models import UniqueConstraint, Q
 from django.db.models.manager import BaseManager
 from django.template import loader, TemplateDoesNotExist
 from django.utils import timezone
+from django.utils.module_loading import import_string
 from django_enumfield import enum
 from jsonschema import validate, exceptions as jsonschema_exceptions
 from toolz import merge
@@ -36,6 +37,7 @@ User = get_user_model()
 logger = logging.getLogger(__name__)
 
 MEDIUMS = ('app_push', 'email', 'sms', 'web_push',)  # TODO Consolidate by using the enum below
+hooks_module = inbox_settings.get_config()['HOOKS_MODULE']
 
 
 class MessageQuerySet(models.QuerySet):
@@ -455,19 +457,53 @@ class MessageLog(models.Model):
         user = self.message.user
         message_group = self.message.group
 
+        try:
+            can_send_hook = import_string(f'{hooks_module}.{self.message.key}.can_send')
+
+            return bool(can_send_hook(self))
+        except (ImportError, ModuleNotFoundError) as e:
+            pass
+
         if self.medium == MessageMedium.APP_PUSH:
+            can_send_hook = None
+            try:
+                can_send_hook = import_string(f'{hooks_module}.{self.message.key}.can_send_app_push')
+            except (ImportError, ModuleNotFoundError) as e:
+                pass
+
+            if can_send_hook:
+                return bool(can_send_hook(self))
+
             if not user.notification_key:
                 self.status = MessageLogStatus.FAILED
                 self.failure_reason = MessageLogFailureReason.MISSING_APP_PUSH_KEY
                 return False
 
         if self.medium == MessageMedium.EMAIL:
+            can_send_hook = None
+            try:
+                can_send_hook = import_string(f'{hooks_module}.{self.message.key}.can_send_email')
+            except (ImportError, ModuleNotFoundError) as e:
+                pass
+
+            if can_send_hook:
+                return bool(can_send_hook(self))
+
             if inbox_settings.get_config()['CHECK_IS_EMAIL_VERIFIED'] and not user.is_email_verified:
                 self.status = MessageLogStatus.FAILED
                 self.failure_reason = MessageLogFailureReason.EMAIL_NOT_VERIFIED
                 return False
 
         if self.medium == MessageMedium.SMS:
+            can_send_hook = None
+            try:
+                can_send_hook = import_string(f'{hooks_module}.{self.message.key}.can_send_sms')
+            except (ImportError, ModuleNotFoundError) as e:
+                pass
+
+            if can_send_hook:
+                return bool(can_send_hook(self))
+
             if inbox_settings.get_config()['CHECK_IS_SMS_VERIFIED'] and not user.is_sms_verified:
                 self.status = MessageLogStatus.FAILED
                 self.failure_reason = MessageLogFailureReason.SMS_NOT_VERIFIED
