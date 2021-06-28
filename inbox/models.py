@@ -457,14 +457,12 @@ class MessageLog(models.Model):
         user = self.message.user
         message_group = self.message.group
 
-        can_send_hook = None
         try:
             can_send_hook = import_string(f'{hooks_module}.{self.message.key}.can_send')
+
+            return bool(can_send_hook(self))
         except (ImportError, ModuleNotFoundError) as e:
             pass
-
-        if can_send_hook:
-            return bool(can_send_hook(self))
 
         if self.medium == MessageMedium.APP_PUSH:
             can_send_hook = None
