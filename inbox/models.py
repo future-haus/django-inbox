@@ -534,7 +534,16 @@ class MessageLog(models.Model):
         subject = self._build_subject()
         body = self._build_body()
 
-        msg = EmailMessage(subject, body, to=[self.message.user.email])
+        # These headers are specific to using Mailchimp and Sendgrid for categorizing reporting
+        #  this shouldn't cause an issue in other email providers, but if it does we can break it out and make
+        #  it configurable using a setting.
+        msg = EmailMessage(subject, body,
+                           to=[self.message.user.email],
+                           headers={
+                               'X-MC-Tags': self.message.key,
+                               'X-SMTPAPI': f'{{"category": "{self.message.key}"}}',
+                               'X-Mailgun-Tag': self.message.key
+                           })
         msg.content_subtype = "html"
         try:
             msg.send()

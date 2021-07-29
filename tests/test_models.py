@@ -453,3 +453,16 @@ class MessageTestCase(InboxTestCaseMixin, TestCase):
         messages = Message.objects.filter(user=self.user)
 
         self.assertEqual(len(messages), 1)
+
+    def test_mailchimp_header_on_email_message(self):
+
+        self.assertEqual(MessageLog.objects.count(), 0)
+
+        Message.objects.create(user=self.user, key='default')
+
+        process_new_messages()
+        process_new_message_logs()
+
+        self.assertEqual(mail.outbox[0].extra_headers, {'X-MC-Tags': 'default',
+                                                        'X-SMTPAPI': '{"category": "default"}',
+                                                        'X-Mailgun-Tag': 'default'})
