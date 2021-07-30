@@ -1,5 +1,12 @@
 # Releases
 
+#### 0.8.4 (2021-07-29)
+
+Improvements
+
+- Send X-MC-Tags, X-SMTPAPI, and X-Mailgun-Tag headers with the message.key when sending an email to allow
+categorizating tracking in those platforms.
+
 #### 0.8.3 (2021-06-28)
 
 Improvements
