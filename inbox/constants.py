@@ -48,10 +48,14 @@ class MessageLogFailureReason(enum.Enum):
     EMAIL_NOT_VERIFIED = 201
     SMS_NOT_VERIFIED = 202
 
+    UNKNOWN_EXCEPTION = 301
+
     __labels__ = {
         MISSING_TEMPLATE: 'Missing template',
         MISSING_APP_PUSH_KEY: 'Missing App Push Key',
 
         EMAIL_NOT_VERIFIED: 'Email is not verified',
-        SMS_NOT_VERIFIED: 'SMS is not verified'
+        SMS_NOT_VERIFIED: 'SMS is not verified',
+
+        UNKNOWN_EXCEPTION: 'Unknown Exception',
     }
