@@ -57,5 +57,5 @@ class MessageLogFailureReason(enum.Enum):
         EMAIL_NOT_VERIFIED: 'Email is not verified',
         SMS_NOT_VERIFIED: 'SMS is not verified',
 
-        UNKNOWN_EXCEPTION: 'Unknown Exception',
+        UNKNOWN_EXCEPTION: 'Unknown Exception'
     }

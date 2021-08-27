@@ -82,7 +82,8 @@ INBOX_CONFIG = {
                 'email': True,
                 'sms': None
             },
-            'message_keys': ['default']
+            'message_keys': ['default', 'hook_fails_throws_exception'],
+            'skip_email': ['hook_fails_throws_exception']
         },
         {
             'id': 'inbox_only',

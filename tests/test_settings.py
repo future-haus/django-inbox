@@ -82,9 +82,9 @@ class SettingsTestCase(TestCase):
                         'web_push': None
                     },
                     'data': {},
-                    'message_keys': ['default'],
+                    'message_keys': ['default', 'hook_fails_throws_exception'],
                     'skip_app_push': [],
-                    'skip_email': [],
+                    'skip_email': ['hook_fails_throws_exception'],
                     'skip_web_push': [],
                     'skip_sms': []
                 },

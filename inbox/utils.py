@@ -106,24 +106,29 @@ def process_new_message_logs():
 
 
 def process_message_logs(message_logs):
+    exceptions = []
+
     with transaction.atomic():
         for message_log in message_logs:
-            if message_log.message.is_forced or message_log.can_send:
-                try:
+            try:
+                can_send = message_log.can_send
+                if message_log.message.is_forced or can_send:
                     message_log.send()
-                except Exception as e:
-                    message_log.status = MessageLogStatus.FAILED
-                    message_log.reason = MessageLogFailureReason.UNKNOWN_EXCEPTION
-                    message_log.save()
-                    raise e
-                else:
+                # can_send has the potential to change values on the message_log object, so we save here
+                #  as a precaution
+                message_log.save()
+            except Exception as e:
+                message_log.status = MessageLogStatus.FAILED.value
+                message_log.failure_reason = str(e)
+                exceptions.append(e)
+            else:
+                if can_send:
                     message_log.status = MessageLogStatus.SENT
-                    message_log.save()
-                    continue  # continue to skip the double saving
+            finally:
+                message_log.save()
 
-            # can_send has the potential to change values on the message_log object, so we save here
-            #  as a precaution
-            message_log.save()
+    if exceptions:
+        raise Exception(exceptions)
 
 
 def save_message_preferences(message_preferences: MessagePreferences, data, preference_id: int = None,

@@ -1,5 +1,14 @@
 # Releases
 
+#### 0.8.5 (2021-08-27)
+
+Improvements
+
+- Catch exceptions when determing to send (can_send) and performing the send so it doesn't hold up other
+message logs being processed. They are logged as a failure, failure reason is the str
+  representation of the exception.
+
+
 #### 0.8.4 (2021-07-29)
 
 Improvements

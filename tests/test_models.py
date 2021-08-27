@@ -370,11 +370,11 @@ class MessageTestCase(InboxTestCaseMixin, TestCase):
         self.assertEqual(len(app_push.outbox), 0)
         self.assertEqual(len(mail.outbox), 1)
 
-        # Grab message logs with app_push, verify status and failure reason
-        message_logs = MessageLog.objects.filter(message__user=user, medium=MessageMedium.APP_PUSH)
+        # Grab message log with app_push, verify status and failure reason
+        message_log = MessageLog.objects.filter(message__user=user, medium=MessageMedium.APP_PUSH).first()
 
-        self.assertEqual(message_logs[0].status, MessageLogStatus.FAILED)
-        self.assertEqual(message_logs[0].failure_reason, str(MessageLogFailureReason.MISSING_APP_PUSH_KEY))
+        self.assertEqual(message_log.status, MessageLogStatus.FAILED)
+        self.assertEqual(message_log.failure_reason, MessageLogFailureReason.MISSING_APP_PUSH_KEY.label)
 
     def test_create_message_inbox_only_welcome(self):
         email = fake.ascii_email()
@@ -466,3 +466,29 @@ class MessageTestCase(InboxTestCaseMixin, TestCase):
         self.assertEqual(mail.outbox[0].extra_headers, {'X-MC-Tags': 'default',
                                                         'X-SMTPAPI': '{"category": "default"}',
                                                         'X-Mailgun-Tag': 'default'})
+
+    def test_hook_fails_catches_exception(self):
+
+        self.assertEqual(MessageLog.objects.count(), 0)
+
+        Message.objects.create(user=self.user, key='hook_fails_throws_exception', fail_silently=False)
+
+        messages = Message.objects.filter(user=self.user)
+        self.assertEqual(len(messages), 1)
+        self.assertFalse(messages[0].is_logged)
+
+        process_new_messages()
+
+        message_logs = MessageLog.objects.filter(message__user=self.user)
+        self.assertEqual(len(message_logs), 1)
+        self.assertEqual(message_logs[0].status, MessageLogStatus.NEW)
+
+        self.assertRaises(Exception, process_new_message_logs)
+
+        message_logs = MessageLog.objects.filter(message__user=self.user)
+        self.assertEqual(len(message_logs), 1)
+        self.assertEqual(message_logs[0].status, MessageLogStatus.FAILED)
+
+        # Running process_new_message_logs again shouldn't raise an error
+        process_new_message_logs()
+
