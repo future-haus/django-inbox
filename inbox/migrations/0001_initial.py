@@ -61,7 +61,7 @@ class Migration(migrations.Migration):
                 ('medium', django_enumfield.db.fields.EnumField(enum=inbox.constants.MessageMedium)),
                 ('send_at', models.DateTimeField(db_index=True)),
                 ('status', django_enumfield.db.fields.EnumField(default=0, enum=inbox.constants.MessageLogStatus)),
-                ('failure_reason', django_enumfield.db.fields.EnumField(default=None, enum=inbox.constants.MessageLogFailureReason, null=True)),
+                ('failure_reason', django_enumfield.db.fields.EnumField(default=None, enum=inbox.constants.MessageLogStatusReason, null=True)),
                 ('created_at', models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='Created')),
                 ('message', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='inbox.Message')),
             ],

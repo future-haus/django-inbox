@@ -3,7 +3,7 @@ from django.utils import timezone
 from django.utils.module_loading import import_string
 
 from inbox import settings as inbox_settings
-from inbox.constants import MessageLogStatus, MessageMedium, MessageLogFailureReason
+from inbox.constants import MessageLogStatus, MessageMedium, MessageLogStatusReason
 from inbox.models import MessageLog, Message, get_default_preference_ids, MessagePreferences
 
 hooks_module = inbox_settings.get_config()['HOOKS_MODULE']
@@ -114,9 +114,6 @@ def process_message_logs(message_logs):
                 can_send = message_log.can_send
                 if message_log.message.is_forced or can_send:
                     message_log.send()
-                # can_send has the potential to change values on the message_log object, so we save here
-                #  as a precaution
-                message_log.save()
             except Exception as e:
                 message_log.status = MessageLogStatus.FAILED.value
                 message_log.failure_reason = str(e)

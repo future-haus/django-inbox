@@ -29,7 +29,7 @@ else:
     from django.contrib.postgres.fields import JSONField
 
 from inbox import settings as inbox_settings
-from inbox.constants import MessageMedium, MessageLogStatus, MessageLogFailureReason
+from inbox.constants import MessageMedium, MessageLogStatus, MessageLogStatusReason
 from inbox.core.app_push.message import AppPushMessage
 from inbox.signals import unread_count, message_preferences_changed
 
@@ -449,7 +449,7 @@ class MessageLog(models.Model):
     medium = enum.EnumField(MessageMedium)
     send_at = models.DateTimeField(db_index=True)  # This is from the parent Message
     status = enum.EnumField(MessageLogStatus, default=MessageLogStatus.NEW)
-    failure_reason = models.TextField(blank=True, null=True)
+    status_reason = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='Created')
 
     @property
@@ -457,12 +457,17 @@ class MessageLog(models.Model):
         user = self.message.user
         message_group = self.message.group
 
+        can_send_hook = None
         try:
             can_send_hook = import_string(f'{hooks_module}.{self.message.key}.can_send')
-
-            return bool(can_send_hook(self))
         except (ImportError, ModuleNotFoundError) as e:
             pass
+
+        if can_send_hook:
+            can_send = bool(can_send_hook(self))
+            if not can_send:
+                self.status = MessageLogStatus.NOT_SENDABLE
+            return can_send
 
         if self.medium == MessageMedium.APP_PUSH:
             can_send_hook = None
@@ -472,11 +477,14 @@ class MessageLog(models.Model):
                 pass
 
             if can_send_hook:
-                return bool(can_send_hook(self))
+                can_send = bool(can_send_hook(self))
+                if not can_send:
+                    self.status = MessageLogStatus.NOT_SENDABLE
+                return can_send
 
             if not user.notification_key:
-                self.status = MessageLogStatus.FAILED
-                self.failure_reason = MessageLogFailureReason.MISSING_APP_PUSH_KEY
+                self.status = MessageLogStatus.NOT_SENDABLE
+                self.failure_reason = MessageLogStatusReason.MISSING_ID
                 return False
 
         if self.medium == MessageMedium.EMAIL:
@@ -487,11 +495,14 @@ class MessageLog(models.Model):
                 pass
 
             if can_send_hook:
-                return bool(can_send_hook(self))
+                can_send = bool(can_send_hook(self))
+                if not can_send:
+                    self.status = MessageLogStatus.NOT_SENDABLE
+                return can_send
 
             if inbox_settings.get_config()['CHECK_IS_EMAIL_VERIFIED'] and not user.is_email_verified:
                 self.status = MessageLogStatus.FAILED
-                self.failure_reason = MessageLogFailureReason.EMAIL_NOT_VERIFIED
+                self.failure_reason = MessageLogStatusReason.NOT_VERIFIED
                 return False
 
         if self.medium == MessageMedium.SMS:
@@ -502,11 +513,14 @@ class MessageLog(models.Model):
                 pass
 
             if can_send_hook:
-                return bool(can_send_hook(self))
+                can_send = bool(can_send_hook(self))
+                if not can_send:
+                    self.status = MessageLogStatus.NOT_SENDABLE
+                return can_send
 
             if inbox_settings.get_config()['CHECK_IS_SMS_VERIFIED'] and not user.is_sms_verified:
                 self.status = MessageLogStatus.FAILED
-                self.failure_reason = MessageLogFailureReason.SMS_NOT_VERIFIED
+                self.failure_reason = MessageLogStatusReason.NOT_VERIFIED
                 return False
 
         preference = next((g for g in user.message_preferences.groups if g['id'] == message_group['id']))
@@ -514,7 +528,7 @@ class MessageLog(models.Model):
         if preference.get(self.medium.name.lower()):
             return True
         else:
-            self.status = MessageLogStatus.SKIPPED_FOR_PREF
+            self.status = MessageLogStatus.NOT_SENDABLE
 
         return False
 

@@ -13,7 +13,7 @@ from freezegun import freeze_time
 
 from inbox import settings as inbox_settings
 from inbox import signals
-from inbox.constants import MessageLogStatus, MessageLogFailureReason
+from inbox.constants import MessageLogStatus, MessageLogStatusReason
 from inbox.core import app_push
 from inbox.models import Message, MessageMedium, MessageLog
 from inbox.test.utils import InboxTestCaseMixin
@@ -237,7 +237,7 @@ class MessageTestCase(InboxTestCaseMixin, TestCase):
 
         for message_log in message.logs.all():
             if message_log.medium == MessageMedium.APP_PUSH:
-                self.assertTrue(message_log.status, MessageLogStatus.SKIPPED_FOR_PREF)
+                self.assertTrue(message_log.status, MessageLogStatus.NOT_SENDABLE)
             if message_log.medium == MessageMedium.EMAIL:
                 self.assertTrue(message_log.status, MessageLogStatus.SENT)
 
@@ -373,8 +373,8 @@ class MessageTestCase(InboxTestCaseMixin, TestCase):
         # Grab message log with app_push, verify status and failure reason
         message_log = MessageLog.objects.filter(message__user=user, medium=MessageMedium.APP_PUSH).first()
 
-        self.assertEqual(message_log.status, MessageLogStatus.FAILED)
-        self.assertEqual(message_log.failure_reason, MessageLogFailureReason.MISSING_APP_PUSH_KEY.label)
+        self.assertEqual(message_log.status, MessageLogStatus.NOT_SENDABLE)
+        self.assertEqual(message_log.status_reason, MessageLogStatusReason.MISSING_ID.label)
 
     def test_create_message_inbox_only_welcome(self):
         email = fake.ascii_email()

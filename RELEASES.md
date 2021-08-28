@@ -1,5 +1,23 @@
 # Releases
 
+#### 0.8.6 (2021-08-28)
+
+Changes
+
+- Rename MessageLog.failure_reason to MessageLog.status_reason
+- Remove MessageLogStatus.SKIPPED_FOR_PREF, replace with MessageLogStatus.NOT_SENDABLE
+  that will be used for a few different scenarios where a Message can't
+  be sent but isn't really a "failure", just a non-sendable situation like
+  an unverified medium ID (email, sms, push), or pref off for that message group, etc.
+- Rename MessageLogFailureReason to MessageLogStatusReason
+- Update values under MessageLogStatusReason to be a bit more generic, like
+  collapsing EMAIL_NOT_VERIFIED and SMS_NOT_VERIFIED into NOT_VERIFIED since
+  each MessageLog is only tied to one Medium.
+- When a message can't be sent because it fails `can_send` the status is
+  set to NOT_SENDABLE so that it's no longer picked up in processing on the next
+  loop. Previously its status could be left as NEW, so it'd just be reprocessed
+  (and skipped) the next time as well.
+
 #### 0.8.5 (2021-08-27)
 
 Improvements
