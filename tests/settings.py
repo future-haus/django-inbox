@@ -168,7 +168,8 @@ INBOX_CONFIG = {
         }
     },
     'TESTING_MEDIUM_OUTPUT_PATH': None,
-    'HOOKS_MODULE': 'tests.hooks'
+    'HOOKS_MODULE': 'tests.hooks',
+    'MAX_AGE_BEYOND_SEND_AT': timezone.timedelta(days=2),
 }
 
 GOOGLE_FCM_SENDER_ID = '12345'

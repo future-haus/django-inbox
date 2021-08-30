@@ -55,6 +55,7 @@ class SettingsTestCase(TestCase):
             'PER_USER_MESSAGES_MAX_COUNT': None,
             'PER_USER_MESSAGES_MIN_AGE': None,
             'PER_USER_MESSAGES_MIN_COUNT': None,
+            'MAX_AGE_BEYOND_SEND_AT': None,
         }
 
         with self.settings(INBOX_CONFIG={}):
@@ -239,6 +240,7 @@ class SettingsTestCase(TestCase):
             'PER_USER_MESSAGES_MAX_COUNT': None,
             'PER_USER_MESSAGES_MIN_AGE': None,
             'PER_USER_MESSAGES_MIN_COUNT': None,
+            'MAX_AGE_BEYOND_SEND_AT': timezone.timedelta(days=2),
         }
 
         inbox_settings.get_config.cache_clear()
