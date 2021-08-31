@@ -49,11 +49,15 @@ class MessageLogStatusReason(enum.Enum):
 
     PREFERENCE_OFF = 301
 
+    SEND_AT_NOT_IN_RANGE = 401
+
     __labels__ = {
         MISSING_TEMPLATE: 'Missing template',
         MISSING_ID: 'Missing id',
 
         NOT_VERIFIED: 'Not verified',
 
-        PREFERENCE_OFF: 'Pref off'
+        PREFERENCE_OFF: 'Pref off',
+
+        SEND_AT_NOT_IN_RANGE: 'Send at not in range'
     }

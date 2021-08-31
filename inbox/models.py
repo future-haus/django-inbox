@@ -453,9 +453,35 @@ class MessageLog(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='Created')
 
     @property
-    def can_send(self):
+    def is_send_at_in_range(self):
+        max_age_beyond_send_at = inbox_settings.get_config()['MAX_AGE_BEYOND_SEND_AT']
+        if max_age_beyond_send_at:
+            max_age = self.send_at + max_age_beyond_send_at
+
+            if timezone.now() > max_age:
+                self.status = MessageLogStatus.NOT_SENDABLE
+                self.status_reason = MessageLogStatusReason.SEND_AT_NOT_IN_RANGE
+                return False
+
+        return True
+
+    @property
+    def is_preferred(self):
         user = self.message.user
         message_group = self.message.group
+
+        preference = next((g for g in user.message_preferences.groups if g['id'] == message_group['id']))
+
+        if not preference.get(self.medium.name.lower()):
+            self.status = MessageLogStatus.NOT_SENDABLE
+            self.status_reason = MessageLogStatusReason.PREFERENCE_OFF
+            return False
+
+        return True
+
+    @property
+    def can_send(self):
+        user = self.message.user
 
         can_send_hook = None
         try:
@@ -523,14 +549,13 @@ class MessageLog(models.Model):
                 self.failure_reason = MessageLogStatusReason.NOT_VERIFIED
                 return False
 
-        preference = next((g for g in user.message_preferences.groups if g['id'] == message_group['id']))
+        if not self.is_send_at_in_range:
+            return False
 
-        if preference.get(self.medium.name.lower()):
-            return True
-        else:
-            self.status = MessageLogStatus.NOT_SENDABLE
+        if not self.is_preferred:
+            return False
 
-        return False
+        return True
 
     def send(self):
         if self.medium == MessageMedium.APP_PUSH:

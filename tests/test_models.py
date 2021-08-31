@@ -6,7 +6,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core import mail
 from django.core.exceptions import ValidationError
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.utils import timezone
 from faker import Faker
 from freezegun import freeze_time
@@ -492,3 +492,62 @@ class MessageTestCase(InboxTestCaseMixin, TestCase):
         # Running process_new_message_logs again shouldn't raise an error
         process_new_message_logs()
 
+    def test_send_at_not_in_range_does_not_send(self):
+
+        self.assertEqual(MessageLog.objects.count(), 0)
+        now = timezone.now()
+
+        message = Message.objects.create(user=self.user, key='default', fail_silently=False,
+                                         send_at=now + timezone.timedelta(days=1))
+
+        future_at = message.send_at + timezone.timedelta(days=7)
+
+        with freeze_time(future_at):
+            process_new_messages()
+            process_new_message_logs()
+
+            self.assertEqual(len(mail.outbox), 0)
+            self.assertEqual(len(app_push.outbox), 1)
+
+    def test_send_at_in_range_does_send(self):
+
+        self.assertEqual(MessageLog.objects.count(), 0)
+        now = timezone.now()
+
+        message = Message.objects.create(user=self.user, key='default', fail_silently=False,
+                                         send_at=now + timezone.timedelta(days=1))
+
+        future_at = message.send_at + timezone.timedelta(days=1)
+
+        with freeze_time(future_at):
+            process_new_messages()
+            process_new_message_logs()
+
+            self.assertEqual(len(mail.outbox), 1)
+            self.assertEqual(len(app_push.outbox), 2)
+
+    def test_send_at_in_range_is_none_does_send(self):
+        # Django doesn't give a good way to override settings when the setting
+        #  is a dictionary, so we'll update the dictionary and then reset it
+        #  at the end.
+        inbox_config = settings.INBOX_CONFIG
+        original_value = inbox_config.get('MAX_AGE_BEYOND_SEND_AT')
+        inbox_config['MAX_AGE_BEYOND_SEND_AT'] = None
+        with override_settings(INBOX_CONFIG=inbox_config):
+            self.assertEqual(MessageLog.objects.count(), 0)
+            now = timezone.now()
+
+            message = Message.objects.create(user=self.user, key='default', fail_silently=False,
+                                             send_at=now + timezone.timedelta(days=1))
+
+            future_at = message.send_at + timezone.timedelta(days=30)
+
+            with freeze_time(future_at):
+                process_new_messages()
+                process_new_message_logs()
+
+                self.assertEqual(len(mail.outbox), 1)
+                self.assertEqual(len(app_push.outbox), 2)
+
+        # Reset as to not break other tests
+        inbox_config['MAX_AGE_BEYOND_SEND_AT'] = original_value

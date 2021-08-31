@@ -5,7 +5,6 @@ from inbox.models import MessageLog
 
 def can_send(message_log: MessageLog):
     user = message_log.message.user
-    message_group = message_log.message.group
 
     if message_log.medium == MessageMedium.APP_PUSH:
         if not user.notification_key:
@@ -25,12 +24,10 @@ def can_send(message_log: MessageLog):
             message_log.status_reason = MessageLogStatusReason.NOT_VERIFIED
             return False
 
-    preference = next((g for g in user.message_preferences.groups if g['id'] == message_group['id']))
+    if not message_log.is_send_at_in_range:
+        return False
 
-    if preference.get(message_log.medium.name.lower()):
-        return True
-    else:
-        message_log.status = MessageLogStatus.NOT_SENDABLE
-        message_log.status_reason = MessageLogStatusReason.PREFERENCE_OFF
+    if not message_log.is_preferred:
+        return False
 
-    return False
+    return True
