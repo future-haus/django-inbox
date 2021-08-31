@@ -58,11 +58,12 @@ INBOX_CONFIG = {
     'MESSAGE_CREATE_FAIL_SILENTLY': True,  # Fail silently if the properties passed to Message.create() would cause an error, this is useful for not crashing in production
     'HOOKS_MODULE': None  # Supports post_message_get, pre_message_log_save, post_message_log_save, and post_message_to_logs
     'PROCESS_NEW_MESSAGES_LIMIT': 25,  # Default limit for processing new messages
-    'PROCESS_NEW_MESSAGE_LOGS_LIMIT': 25  # Default limit for processing new message logs
+    'PROCESS_NEW_MESSAGE_LOGS_LIMIT': 25,  # Default limit for processing new message logs
     'PER_USER_MESSAGES_MAX_AGE': None,  # timedelta, Maximum age of a message for when it's available for maintenance cleanup
     'PER_USER_MESSAGES_MIN_COUNT': None,  # integer, Used to bound max age if desired, only has an effect if max age is set
     'PER_USER_MESSAGES_MAX_COUNT': None,  # integer, Maximum count used, when messages exceed this they are available for maintenance cleanup
     'PER_USER_MESSAGES_MIN_AGE': None,  # timedelta, Used to bound max count, if desired, only has an effect if max count is set
+    'MAX_AGE_BEYOND_SEND_AT': None,  # timedelta, Used to control the furthest out you can get from a send_at before the Message won't be sent at all, safe-guard
 }
 ```
 

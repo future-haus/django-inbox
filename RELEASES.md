@@ -1,5 +1,14 @@
 # Releases
 
+#### 0.8.7 (2021-08-31)
+
+Improvement
+
+- Add ability to specify a max age that the current time can surpass the send_at on
+  a Message before it's considered too old to send. The primary use case is a safe-guard
+  if the system or cron was not operational for any reason and Messages are
+  time-sensitive they won't be sent.
+
 #### 0.8.6 (2021-08-28)
 
 Changes
