@@ -252,14 +252,18 @@ Signals
 
 `unread_count`
 
-Fires when number of unread messages changes. Receives one parameter, `count`, the number of
-unread messages.
+Fires when number of unread messages changes. Receives the following parameters:
+> `user` the user of the change
+> 
+> `count` the number of unread messages
 
 `message_preferences_changes`
 
-Fires when any message preference group medium changes. Receives `delta` which is structured
-just like message preferences and contains only the groups that contained changes and only
-the mediums that changed with their new/current value.
+Fires when any message preference group medium changes. Receives the following parameters:
+> `user` the user of the change
+>
+> `delta` which is structured just like message preferences and contains only the groups that contained changes and only
+the mediums that changed with their new/current value
 
     
 

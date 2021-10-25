@@ -1,5 +1,11 @@
 # Releases
 
+#### 0.8.8 (2021-10-25)
+
+Changes
+
+- Pass the user invormation to existing signals as the `user` parameter. It will be the User object.
+
 #### 0.8.7 (2021-08-31)
 
 Improvement

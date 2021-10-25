@@ -1,7 +1,7 @@
 import django.dispatch
 
-# Arguments: "count"
+# Arguments: user, count
 unread_count = django.dispatch.Signal()
 
-# Arguments: "delta"
+# Arguments: user, delta
 message_preferences_changed = django.dispatch.Signal()

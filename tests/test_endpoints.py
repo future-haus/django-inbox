@@ -96,7 +96,7 @@ class EndpointTests(InboxTestCaseMixin, TransactionTestCase):
         process_new_message_logs()
 
         # Assert the signal was called only once with the args
-        handler.assert_called_with(signal=signals.unread_count, count=1, sender=Message)
+        handler.assert_called_with(signal=signals.unread_count, count=1, sender=Message, user=user)
 
         # Verify there's an update_account message in Inbox and in model directly
         response = self.get(f'/api/v1/users/{user_id}/messages')
@@ -136,7 +136,7 @@ class EndpointTests(InboxTestCaseMixin, TransactionTestCase):
             self.assertIsNone(res.data['results'][1]['data'])
 
             # Assert the signal was called only once with the args
-            handler.assert_called_with(signal=signals.unread_count, count=2, sender=Message)
+            handler.assert_called_with(signal=signals.unread_count, count=2, sender=Message, user=user)
 
             self.assertEqual(len(app_push.outbox), 4)
 
@@ -150,7 +150,7 @@ class EndpointTests(InboxTestCaseMixin, TransactionTestCase):
             self.assertHTTP200(response)
 
             # Assert the signal was called only once with the args
-            handler.assert_called_with(signal=signals.unread_count, count=0, sender=Message)
+            handler.assert_called_with(signal=signals.unread_count, count=0, sender=Message, user=user)
 
             self.assertEqual(len(app_push.outbox), 5)
 
@@ -818,7 +818,8 @@ class EndpointTests(InboxTestCaseMixin, TransactionTestCase):
                                                 'description': 'General news and updates.',
                                                 'data': {},
                                                 'app_push': False}],
-                                        sender=MessagePreferences)
+                                        sender=MessagePreferences,
+                                        user=self.user_1)
 
     def test_change_multiple_message_preference_fires_signal(self):
 
@@ -839,7 +840,8 @@ class EndpointTests(InboxTestCaseMixin, TransactionTestCase):
         # Assert the signal was called only once with the args
         handler.assert_called_once_with(signal=signals.message_preferences_changed,
                                         delta=[{'id': 'default', 'label': 'Updates', 'description': 'General news and updates.', 'data': {}, 'app_push': False}, {'id': 'account_updated', 'label': 'Account Updated', 'description': 'When you update your account.', 'data': {}, 'app_push': False}],
-                                        sender=MessagePreferences)
+                                        sender=MessagePreferences,
+                                        user=self.user_1)
 
     def test_change_multiple_medium_message_preference_fires_signal(self):
         self.client.force_login(self.user_1)
@@ -864,7 +866,8 @@ class EndpointTests(InboxTestCaseMixin, TransactionTestCase):
                                                 'data': {},
                                                 'app_push': False,
                                                 'email': False}],
-                                        sender=MessagePreferences)
+                                        sender=MessagePreferences,
+                                        user=self.user_1)
 
     def test_change_zero_message_preference_does_not_fire_signal(self):
 

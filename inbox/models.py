@@ -93,7 +93,7 @@ class MessageManager(BaseManager.from_queryset(MessageQuerySet)):
                 return
             else:
                 Message.send_unread_count_app_push(user, 0)
-                unread_count.send(sender=Message, count=0)
+                unread_count.send(sender=Message, user=user, count=0)
 
     def unread_count(self, user_id: int):
         return self.filter(user_id=user_id, send_at__lte=timezone.now(), read_at__isnull=True, deleted_at__isnull=True,
@@ -412,7 +412,7 @@ class Message(models.Model):
 
         self.send_unread_count_app_push(self.user, count)
 
-        unread_count.send(sender=self.__class__, count=count)
+        unread_count.send(sender=self.__class__, user=self.user, count=count)
 
     def _get_group_from_key(self):
         for message_group in get_message_groups():
@@ -901,7 +901,8 @@ class MessagePreferences(models.Model):
 
         changed_message_preferences = self.delta(original_message_preferences) if original_message_preferences else []
         if changed_message_preferences:
-            message_preferences_changed.send(sender=self.__class__, delta=changed_message_preferences)
+            message_preferences_changed.send(sender=self.__class__, user=original_message_preferences.user,
+                                             delta=changed_message_preferences)
 
     def delta(self, message_preferences):
         """
