@@ -78,7 +78,7 @@ class MessageTestCase(InboxTestCaseMixin, TestCase):
         process_new_message_logs()
 
         # Assert the signal was called only once with the args
-        handler.assert_called_once_with(signal=signals.unread_count, count=1, sender=Message)
+        handler.assert_called_once_with(signal=signals.unread_count, count=1, sender=Message, user=self.user)
 
         # Do what it takes to trigger the signal
         Message.objects.create(user=self.user, key='default')
@@ -87,7 +87,7 @@ class MessageTestCase(InboxTestCaseMixin, TestCase):
         process_new_message_logs()
 
         # Assert the signal was called only once with the args
-        handler.assert_called_with(signal=signals.unread_count, count=2, sender=Message)
+        handler.assert_called_with(signal=signals.unread_count, count=2, sender=Message, user=self.user)
 
     def test_unread_count_signal_gets_proper_data_after_mark_read(self):
 
@@ -103,7 +103,7 @@ class MessageTestCase(InboxTestCaseMixin, TestCase):
         process_new_message_logs()
 
         # Assert the signal was called only once with the args
-        handler.assert_called_with(signal=signals.unread_count, count=3, sender=Message)
+        handler.assert_called_with(signal=signals.unread_count, count=3, sender=Message, user=self.user)
 
         handler = MagicMock()
         signals.unread_count.connect(handler, sender=Message)
@@ -111,7 +111,7 @@ class MessageTestCase(InboxTestCaseMixin, TestCase):
         Message.objects.mark_all_read(self.user.id)
 
         # Assert the signal was called only once with the args
-        handler.assert_called_once_with(signal=signals.unread_count, count=0, sender=Message)
+        handler.assert_called_once_with(signal=signals.unread_count, count=0, sender=Message, user=self.user)
 
     def test_save_message_with_key_not_in_a_group(self):
         # We use lru_cache on INBOX_CONFIG, clear it out
