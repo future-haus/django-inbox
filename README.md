@@ -288,8 +288,3 @@ Make sure you have twine in your system Python. Bump the version number in setup
 to repo and then run:
 
 `python setup.py sdist bdist_wheel upload`
-
-TODOs
-=====
-
-https://3.basecamp.com/4413376/projects/16662219
