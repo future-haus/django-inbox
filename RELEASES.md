@@ -1,10 +1,16 @@
 # Releases
 
+#### 0.8.9 (2022-06-10)
+
+Changes
+
+- Add updated_at property to the MessageLog model.
+
 #### 0.8.8 (2021-10-25)
 
 Changes
 
-- Pass the user invormation to existing signals as the `user` parameter. It will be the User object.
+- Pass the User object to existing signals as the `user` parameter.
 
 #### 0.8.7 (2021-08-31)
 
