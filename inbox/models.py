@@ -208,8 +208,9 @@ class Message(models.Model):
         ]
         indexes = [
             models.Index(fields=['-send_at', 'read_at', 'deleted_at', 'is_hidden']),
+            models.Index(fields=['send_at']),
         ]
-        ordering = ('-send_at',)
+        ordering = ('-send_at',)  # This is the default ordering if order_by is not specified on a query
 
     objects = MessageManager()
 
@@ -443,6 +444,7 @@ class MessageLog(models.Model):
     class Meta:
         indexes = [
             models.Index(fields=['-send_at', 'status']),
+            models.Index(fields=['send_at', 'status'])
         ]
 
     message = models.ForeignKey(Message, on_delete=models.CASCADE, related_name='logs')

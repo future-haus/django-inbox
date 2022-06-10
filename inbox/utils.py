@@ -14,8 +14,9 @@ def process_new_messages():
 
     messages = Message.objects \
                    .select_related('user') \
-                   .select_for_update(skip_locked=True).filter(send_at__lte=timezone.now(),
-                                                               is_logged=False)[:limit]
+                   .select_for_update(skip_locked=True) \
+                   .filter(send_at__lte=timezone.now(), is_logged=False) \
+                   .order_by('send_at')[:limit]
 
     process_messages(messages)
 
@@ -100,8 +101,9 @@ def process_new_message_logs():
 
     message_logs = MessageLog.objects \
                        .select_related('message', 'message__user') \
-                       .select_for_update(skip_locked=True).filter(send_at__lte=timezone.now(),
-                                                                   status=MessageLogStatus.NEW)[:limit]
+                       .select_for_update(skip_locked=True) \
+                       .filter(send_at__lte=timezone.now(), status=MessageLogStatus.NEW) \
+                       .order_by('send_at')[:limit]
     process_message_logs(message_logs)
 
 
