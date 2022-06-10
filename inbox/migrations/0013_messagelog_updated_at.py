@@ -5,14 +5,34 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
+    atomic = False
+
     dependencies = [
         ('inbox', '0012_auto_20210827_2318'),
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='messagelog',
-            name='updated_at',
-            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='Updated'),
+        migrations.RunSQL(
+            "ALTER TABLE inbox_messagelog ADD COLUMN updated_at timestamp with time zone;",
+            state_operations=[
+                migrations.AddField(
+                    model_name='messagelog',
+                    name='updated_at',
+                    field=models.DateTimeField(auto_now=True, null=True,
+                                               verbose_name='Updated'),
+                ),
+            ],
         ),
+        migrations.RunSQL(
+            "CREATE INDEX CONCURRENTLY inbox_messagelog_updated_at_c06bf595 "
+            "ON inbox_messagelog (updated_at);",
+            state_operations=[
+                migrations.AlterField(
+                    model_name='messagelog',
+                    name='updated_at',
+                    field=models.DateTimeField(auto_now=True, db_index=True, null=True,
+                                               verbose_name='Updated'),
+                ),
+            ],
+        )
     ]
