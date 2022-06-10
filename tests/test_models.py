@@ -373,6 +373,7 @@ class MessageTestCase(InboxTestCaseMixin, TestCase):
         # Grab message log with app_push, verify status and failure reason
         message_log = MessageLog.objects.filter(message__user=user, medium=MessageMedium.APP_PUSH).first()
 
+        self.assertGreater(message_log.updated_at, message_log.created_at)
         self.assertEqual(message_log.status, MessageLogStatus.NOT_SENDABLE)
         self.assertEqual(message_log.status_reason, MessageLogStatusReason.MISSING_ID.label)
 

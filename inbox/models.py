@@ -451,6 +451,7 @@ class MessageLog(models.Model):
     status = enum.EnumField(MessageLogStatus, default=MessageLogStatus.NEW)
     status_reason = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='Created')
+    updated_at = models.DateTimeField(auto_now=True, db_index=True, verbose_name='Updated')
 
     @property
     def is_send_at_in_range(self):
