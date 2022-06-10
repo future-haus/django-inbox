@@ -1,5 +1,12 @@
 # Releases
 
+#### 0.8.10 (2022-06-10)
+
+Improvement
+
+- Add index on Message for send_at field ordered ascending. In the process new messages function, it specifies pulling ordered by send at, which will use this new index.
+- Add multi-column index on MessageLog for send_at and status to improve performance. Add order_by to query on processing new message logs.
+
 #### 0.8.9 (2022-06-10)
 
 Changes
