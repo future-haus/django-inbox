@@ -9,7 +9,7 @@ import os
 import sys
 from shutil import rmtree
 
-from setuptools import find_packages, setup, Command
+from setuptools import Command, find_packages, setup
 
 NAME = 'django-inbox'
 DESCRIPTION = 'A Django app to support user inbox messages.'
@@ -17,10 +17,10 @@ URL = 'http://www.futurehaus.com/'
 EMAIL = 'jt@futurehaus.com'
 AUTHOR = 'Josh Turmel'
 REQUIRES_PYTHON = '>=3.7'
-VERSION = '0.8.10'
+VERSION = '0.8.11'
 
 REQUIRED = [
-    'django>=2.2,<3.2',
+    'django>=2.2,<=4.1',
     'django-annoying',
     'django_enumfield>=2.0.0',
     'djangorestframework',

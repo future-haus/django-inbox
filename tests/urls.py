@@ -1,6 +1,5 @@
-from django.conf.urls import url
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
-from django.urls import include
+from django.urls import include, re_path
 
 from inbox.cron import view_process_new_messages, view_process_new_message_logs
 from inbox.views import MessageViewSet, NestedMessagesViewSet, MessagePreferencesViewSet
@@ -22,9 +21,9 @@ messages_router = router.register(r'messages', MessageViewSet, basename='message
 router.register(r'message[-_]preferences', MessagePreferencesViewSet, basename='messagepreferences')
 
 urlpatterns = [
-    url(r'^api/(?P<version>v1)/', include(router.urls)),
-    url(r'^cron/process_new_messages$', view_process_new_messages),
-    url(r'^cron/process_new_message_logs$', view_process_new_message_logs),
+    re_path(r'^api/(?P<version>v1)/', include(router.urls)),
+    re_path(r'^cron/process_new_messages$', view_process_new_messages),
+    re_path(r'^cron/process_new_message_logs$', view_process_new_message_logs),
 ]
 
 urlpatterns += staticfiles_urlpatterns()
