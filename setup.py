@@ -20,7 +20,7 @@ REQUIRES_PYTHON = '>=3.7'
 VERSION = '0.8.11'
 
 REQUIRED = [
-    'django>=2.2,<=4.1',
+    'django>=2.2,<4.2',
     'django-annoying',
     'django_enumfield>=2.0.0',
     'djangorestframework',
