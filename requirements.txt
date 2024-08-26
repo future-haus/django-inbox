@@ -6,14 +6,13 @@ drf-extensions
 toolz
 psycopg2-binary
 
+# for tests
 coverage
 Faker
-django-annoying
 responses
 djangorestframework-simplejwt
-hashids==1.2.0
+hashids
 freezegun
 twine
 beautifultable
-pyfcm==1.4.7
-urllib3==1.26.0
+pyfcm==2.0.5

@@ -15,47 +15,50 @@ class SettingsTestCase(TestCase):
 
         default_config = {
             # Message groups are used to organize the messages and provide preferences and their defaults
-            'MESSAGE_GROUPS': [
+            "MESSAGE_GROUPS": [
                 {
-                    'id': 'default',
-                    'label': 'News and Updates',
-                    'description': 'General news and updates.',
-                    'is_preference': True,
-                    'use_preference': None,  # If is_preference is False, this defines which group to use as preference
-                    'preference_defaults': {  # If you want to disable a preference, just use None
-                        'app_push': True,
-                        'email': True,
-                        'sms': None,
-                        'web_push': None
+                    "id": "default",
+                    "label": "News and Updates",
+                    "description": "General news and updates.",
+                    "is_preference": True,
+                    "use_preference": None,  # If is_preference is False, this defines which group to use as preference
+                    "preference_defaults": {  # If you want to disable a preference, just use None
+                        "app_push": True,
+                        "email": True,
+                        "sms": None,
+                        "web_push": None,
                     },
-                    'data': {},
-                    'message_keys': ['default'],
-                    'skip_app_push': [],
-                    'skip_email': [],
-                    'skip_web_push': [],
-                    'skip_sms': []
+                    "data": {},
+                    "message_keys": ["default"],
+                    "skip_app_push": [],
+                    "skip_email": [],
+                    "skip_web_push": [],
+                    "skip_sms": [],
                 }
             ],
             # Callable that returns the Firebase push notification key so that a user can be sent pushes, or None
             # if one doesn't exist for the user.
-            'CHECK_IS_EMAIL_VERIFIED': True,
-            'BACKENDS': {
-                'APP_PUSH': 'inbox.core.app_push.backends.locmem.AppPushBackend',
-                'APP_PUSH_CONFIG': {
-                    'GOOGLE_FCM_SERVER_KEY': 'abc'
-                }
+            "CHECK_IS_EMAIL_VERIFIED": True,
+            "BACKENDS": {
+                "APP_PUSH": "inbox.core.app_push.backends.locmem.AppPushBackend",
+                "APP_PUSH_CONFIG": {
+                    "CREDENTIALS": None,
+                    "SERVICE_ACCOUNT_FILE": None,
+                    "PROJECT_ID": 12345,
+                    "ENV": "app_engine",  # 'app_engine' or None
+                },
             },
-            'TESTING_MEDIUM_OUTPUT_PATH': None,
-            'DISABLE_NEW_DATA_SILENT_APP_PUSH': False,
-            'MESSAGE_CREATE_FAIL_SILENTLY': True,
-            'HOOKS_MODULE': None,
-            'PROCESS_NEW_MESSAGES_LIMIT': 25,
-            'PROCESS_NEW_MESSAGE_LOGS_LIMIT': 25,
-            'PER_USER_MESSAGES_MAX_AGE': None,
-            'PER_USER_MESSAGES_MAX_COUNT': None,
-            'PER_USER_MESSAGES_MIN_AGE': None,
-            'PER_USER_MESSAGES_MIN_COUNT': None,
-            'MAX_AGE_BEYOND_SEND_AT': None,
+            "TESTING_MEDIUM_OUTPUT_PATH": None,
+            "DISABLE_NEW_DATA_SILENT_APP_PUSH": False,
+            "MESSAGE_CREATE_FAIL_SILENTLY": True,
+            "HOOKS_MODULE": None,
+            "PROCESS_NEW_MESSAGES_LIMIT": 25,
+            "PROCESS_NEW_MESSAGE_LOGS_LIMIT": 25,
+            "PER_USER_MESSAGES_MAX_AGE": None,
+            "PER_USER_MESSAGES_MAX_COUNT": None,
+            "PER_USER_MESSAGES_MIN_AGE": None,
+            "PER_USER_MESSAGES_MIN_COUNT": None,
+            "MAX_AGE_BEYOND_SEND_AT": None,
         }
 
         with self.settings(INBOX_CONFIG={}):
@@ -69,178 +72,188 @@ class SettingsTestCase(TestCase):
 
         test_app_config = {
             # Message groups are used to organize the messages and provide preferences and their defaults
-            'MESSAGE_GROUPS': [
+            "MESSAGE_GROUPS": [
                 {
-                    'id': 'default',
-                    'label': 'Updates',
-                    'description': 'General news and updates.',
-                    'is_preference': True,
-                    'use_preference': None,
-                    'preference_defaults': {
-                        'app_push': True,
-                        'email': True,
-                        'sms': None,
-                        'web_push': None
+                    "id": "default",
+                    "label": "Updates",
+                    "description": "General news and updates.",
+                    "is_preference": True,
+                    "use_preference": None,
+                    "preference_defaults": {
+                        "app_push": True,
+                        "email": True,
+                        "sms": None,
+                        "web_push": None,
                     },
-                    'data': {},
-                    'message_keys': ['default', 'hook_fails_throws_exception'],
-                    'skip_app_push': [],
-                    'skip_email': ['hook_fails_throws_exception'],
-                    'skip_web_push': [],
-                    'skip_sms': []
+                    "data": {},
+                    "message_keys": ["default", "hook_fails_throws_exception"],
+                    "skip_app_push": [],
+                    "skip_email": ["hook_fails_throws_exception"],
+                    "skip_web_push": [],
+                    "skip_sms": [],
                 },
                 {
-                    'id': 'inbox_only',
-                    'label': 'Inbox Only',
-                    'description': 'Inbox only messages.',
-                    'is_preference': False,
-                    'use_preference': None,
-                    'preference_defaults': {
-                        'app_push': None,
-                        'email': None,
-                        'sms': None,
-                        'web_push': None
+                    "id": "inbox_only",
+                    "label": "Inbox Only",
+                    "description": "Inbox only messages.",
+                    "is_preference": False,
+                    "use_preference": None,
+                    "preference_defaults": {
+                        "app_push": None,
+                        "email": None,
+                        "sms": None,
+                        "web_push": None,
                     },
-                    'data': {},
-                    'message_keys': ['welcome', 'key_with_no_template'],
-                    'skip_app_push': [],
-                    'skip_email': [],
-                    'skip_web_push': [],
-                    'skip_sms': []
+                    "data": {},
+                    "message_keys": ["welcome", "key_with_no_template"],
+                    "skip_app_push": [],
+                    "skip_email": [],
+                    "skip_web_push": [],
+                    "skip_sms": [],
                 },
                 {
-                    'id': 'account_updated',
-                    'label': 'Account Updated',
-                    'description': 'When you update your account.',
-                    'is_preference': True,
-                    'use_preference': None,
-                    'preference_defaults': {
-                        'app_push': True,
-                        'email': True,
-                        'sms': None,
-                        'web_push': None
+                    "id": "account_updated",
+                    "label": "Account Updated",
+                    "description": "When you update your account.",
+                    "is_preference": True,
+                    "use_preference": None,
+                    "preference_defaults": {
+                        "app_push": True,
+                        "email": True,
+                        "sms": None,
+                        "web_push": None,
                     },
-                    'data': {},
-                    'message_keys': ['new_account', 'account_updated'],
-                    'skip_app_push': [],
-                    'skip_email': [],
-                    'skip_web_push': [],
-                    'skip_sms': []
+                    "data": {},
+                    "message_keys": ["new_account", "account_updated"],
+                    "skip_app_push": [],
+                    "skip_email": [],
+                    "skip_web_push": [],
+                    "skip_sms": [],
                 },
                 {
-                    'id': 'friend_requests',
-                    'label': 'Friend Requests',
-                    'description': "Receive reminders about friend requests.",
-                    'is_preference': True,
-                    'use_preference': None,
-                    'preference_defaults': {
-                        'app_push': True,
-                        'email': True,
-                        'sms': True,
-                        'web_push': True
+                    "id": "friend_requests",
+                    "label": "Friend Requests",
+                    "description": "Receive reminders about friend requests.",
+                    "is_preference": True,
+                    "use_preference": None,
+                    "preference_defaults": {
+                        "app_push": True,
+                        "email": True,
+                        "sms": True,
+                        "web_push": True,
                     },
-                    'data': {},
-                    'message_keys': ['new_friend_request', 'friend_request_accepted'],
-                    'skip_app_push': [],
-                    'skip_email': [],
-                    'skip_web_push': [],
-                    'skip_sms': []
+                    "data": {},
+                    "message_keys": ["new_friend_request", "friend_request_accepted"],
+                    "skip_app_push": [],
+                    "skip_email": [],
+                    "skip_web_push": [],
+                    "skip_sms": [],
                 },
                 {
-                    'id': 'important_updates',
-                    'label': 'Important Updates',
-                    'description': "Receive notifications about important updates.",
-                    'is_preference': True,
-                    'use_preference': None,
-                    'preference_defaults': {
-                        'app_push': True,
-                        'email': True,
-                        'sms': None,
-                        'web_push': None
+                    "id": "important_updates",
+                    "label": "Important Updates",
+                    "description": "Receive notifications about important updates.",
+                    "is_preference": True,
+                    "use_preference": None,
+                    "preference_defaults": {
+                        "app_push": True,
+                        "email": True,
+                        "sms": None,
+                        "web_push": None,
                     },
-                    'data': {},
-                    'message_keys': ['important_update'],
-                    'skip_app_push': [],
-                    'skip_email': [],
-                    'skip_web_push': [],
-                    'skip_sms': []
+                    "data": {},
+                    "message_keys": ["important_update"],
+                    "skip_app_push": [],
+                    "skip_email": [],
+                    "skip_web_push": [],
+                    "skip_sms": [],
                 },
                 {
-                    'id': 'push_only_group',
-                    'label': 'Push only group',
-                    'description': "Receive notifications about push only.",
-                    'is_preference': True,
-                    'use_preference': None,
-                    'preference_defaults': {
-                        'app_push': True,
-                        'email': None,
-                        'sms': None,
-                        'web_push': None
+                    "id": "push_only_group",
+                    "label": "Push only group",
+                    "description": "Receive notifications about push only.",
+                    "is_preference": True,
+                    "use_preference": None,
+                    "preference_defaults": {
+                        "app_push": True,
+                        "email": None,
+                        "sms": None,
+                        "web_push": None,
                     },
-                    'data': {},
-                    'message_keys': ['push_only'],
-                    'skip_app_push': [],
-                    'skip_email': [],
-                    'skip_web_push': [],
-                    'skip_sms': []
+                    "data": {},
+                    "message_keys": ["push_only"],
+                    "skip_app_push": [],
+                    "skip_email": [],
+                    "skip_web_push": [],
+                    "skip_sms": [],
                 },
                 {
-                    'id': 'group_with_all_mediums_off',
-                    'label': 'Group with All Mediums Off',
-                    'description': "This group should not show up in preferences.",
-                    'is_preference': True,
-                    'use_preference': None,
-                    'preference_defaults': {
-                        'app_push': None,
-                        'email': None,
-                        'web_push': None,
-                        'sms': None
+                    "id": "group_with_all_mediums_off",
+                    "label": "Group with All Mediums Off",
+                    "description": "This group should not show up in preferences.",
+                    "is_preference": True,
+                    "use_preference": None,
+                    "preference_defaults": {
+                        "app_push": None,
+                        "email": None,
+                        "web_push": None,
+                        "sms": None,
                     },
-                    'data': {},
-                    'message_keys': ['all_mediums_off'],
-                    'skip_app_push': [],
-                    'skip_email': [],
-                    'skip_web_push': [],
-                    'skip_sms': []
+                    "data": {},
+                    "message_keys": ["all_mediums_off"],
+                    "skip_app_push": [],
+                    "skip_email": [],
+                    "skip_web_push": [],
+                    "skip_sms": [],
                 },
                 {
-                    'id': 'group_with_skip_push',
-                    'label': 'Group with skip push',
-                    'description': "This group has one key that won't send an app push.",
-                    'is_preference': True,
-                    'use_preference': None,
-                    'preference_defaults': {
-                        'app_push': True,
-                        'email': True,
-                        'web_push': None,
-                        'sms': None
+                    "id": "group_with_skip_push",
+                    "label": "Group with skip push",
+                    "description": "This group has one key that won't send an app push.",
+                    "is_preference": True,
+                    "use_preference": None,
+                    "preference_defaults": {
+                        "app_push": True,
+                        "email": True,
+                        "web_push": None,
+                        "sms": None,
                     },
-                    'data': {},
-                    'message_keys': ['group_with_skip_push', 'group_with_skip_push_2', 'group_with_skip_push_3'],
-                    'skip_app_push': ['group_with_skip_push_2', 'group_with_skip_push_3'],
-                    'skip_email': ['group_with_skip_push_3'],
-                    'skip_web_push': [],
-                    'skip_sms': []
-                }
+                    "data": {},
+                    "message_keys": [
+                        "group_with_skip_push",
+                        "group_with_skip_push_2",
+                        "group_with_skip_push_3",
+                    ],
+                    "skip_app_push": [
+                        "group_with_skip_push_2",
+                        "group_with_skip_push_3",
+                    ],
+                    "skip_email": ["group_with_skip_push_3"],
+                    "skip_web_push": [],
+                    "skip_sms": [],
+                },
             ],
-            'CHECK_IS_EMAIL_VERIFIED': True,
-            'BACKENDS': {
-                'APP_PUSH': 'inbox.core.app_push.backends.locmem.AppPushBackend',
-                'APP_PUSH_CONFIG': {
-                    'GOOGLE_FCM_SERVER_KEY': 'abc'
-                }
+            "CHECK_IS_EMAIL_VERIFIED": True,
+            "BACKENDS": {
+                "APP_PUSH": "inbox.core.app_push.backends.locmem.AppPushBackend",
+                "APP_PUSH_CONFIG": {
+                    "CREDENTIALS": None,
+                    "SERVICE_ACCOUNT_FILE": "service-account.json",
+                    "PROJECT_ID": 12345,
+                    "ENV": "app_engine",
+                },
             },
-            'TESTING_MEDIUM_OUTPUT_PATH': None,
-            'DISABLE_NEW_DATA_SILENT_APP_PUSH': False,
-            'MESSAGE_CREATE_FAIL_SILENTLY': True,
-            'HOOKS_MODULE': 'tests.hooks',
-            'PROCESS_NEW_MESSAGES_LIMIT': 25,
-            'PROCESS_NEW_MESSAGE_LOGS_LIMIT': 25,
-            'PER_USER_MESSAGES_MAX_AGE': None,
-            'PER_USER_MESSAGES_MAX_COUNT': None,
-            'PER_USER_MESSAGES_MIN_AGE': None,
-            'PER_USER_MESSAGES_MIN_COUNT': None,
-            'MAX_AGE_BEYOND_SEND_AT': timezone.timedelta(days=2),
+            "TESTING_MEDIUM_OUTPUT_PATH": None,
+            "DISABLE_NEW_DATA_SILENT_APP_PUSH": False,
+            "MESSAGE_CREATE_FAIL_SILENTLY": True,
+            "HOOKS_MODULE": "tests.hooks",
+            "PROCESS_NEW_MESSAGES_LIMIT": 25,
+            "PROCESS_NEW_MESSAGE_LOGS_LIMIT": 25,
+            "PER_USER_MESSAGES_MAX_AGE": None,
+            "PER_USER_MESSAGES_MAX_COUNT": None,
+            "PER_USER_MESSAGES_MIN_AGE": None,
+            "PER_USER_MESSAGES_MIN_COUNT": None,
+            "MAX_AGE_BEYOND_SEND_AT": timezone.timedelta(days=2),
         }
 
         inbox_settings.get_config.cache_clear()

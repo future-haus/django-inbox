@@ -1,4 +1,5 @@
 import base64
+import logging
 from unittest.mock import MagicMock
 
 from django.conf import settings
@@ -13,7 +14,13 @@ from inbox import settings as inbox_settings
 from inbox import signals
 from inbox.core import app_push
 
-from inbox.models import Message, MessageLog, get_message_groups, get_message_group, MessagePreferences
+from inbox.models import (
+    Message,
+    MessageLog,
+    get_message_groups,
+    get_message_group,
+    MessagePreferences,
+)
 from inbox.test.utils import InboxTestCaseMixin
 from inbox.utils import process_new_messages, process_new_message_logs
 from tests.models import DeviceGroup
@@ -24,21 +31,26 @@ User = get_user_model()
 
 
 class EndpointTests(InboxTestCaseMixin, TransactionTestCase):
-    fixtures = ['users']
+    fixtures = ["users"]
 
     def setUp(self):
         super().setUp()
 
-        self.user_1 = User.objects.get(email='testuser+1@pre.haus')
+        self.user_1 = User.objects.get(email="testuser+1@pre.haus")
+
+        logger = logging.getLogger("django.request")
+        logger.setLevel(logging.ERROR)
 
     def _get_message_preferences(self, user_id):
-        return self.client.get(f'/api/v1/users/{user_id}/message_preferences')
+        return self.client.get(f"/api/v1/users/{user_id}/message_preferences")
 
     def test_device_group_on_user(self):
         self.assertIsInstance(self.user_1.device_group, DeviceGroup)
 
     def test_register_device_without_auth(self):
-        response = self.post('/api/v1/users/1/devices', {'registration_token': 'abcdef123'})
+        response = self.post(
+            "/api/v1/users/1/devices", {"registration_token": "abcdef123"}
+        )
         self.assertHTTP401(response)
 
     @responses.activate
@@ -48,12 +60,28 @@ class EndpointTests(InboxTestCaseMixin, TransactionTestCase):
         self.client.force_login(user)
 
         # Mock the response from Google
-        responses.add(responses.POST, 'https://fcm.googleapis.com/fcm/notification',
-                      json={'notification_key': '0987654321poiuytrewq'})
+        responses.add(
+            responses.POST,
+            "https://oauth2.googleapis.com/token",
+            json={
+                "access_token": "1/fFAGRNJru1FTz70BzhT3Zg",
+                "expires_in": 3920,
+                "token_type": "Bearer",
+                "scope": "https://www.googleapis.com/auth/drive.metadata.readonly",
+                "refresh_token": "1//xEoDL4iW3cxlI7yDbSRFYNG01kVKM2C-259HOF2aQbI",
+            },
+        )
+        responses.add(
+            responses.POST,
+            "https://fcm.googleapis.com/fcm/notification",
+            json={"notification_key": "0987654321poiuytrewq"},
+        )
 
-        response = self.post(f'/api/v1/users/{user_id}/devices', {'registration_token': 'abcdef123'})
+        response = self.post(
+            f"/api/v1/users/{user_id}/devices", {"registration_token": "abcdef123"}
+        )
         self.assertHTTP201(response)
-        self.assertEqual(user.device_group.notification_key_name, '9N')
+        self.assertEqual(user.device_group.notification_key_name, "9N")
 
     @responses.activate
     def test_register_and_remove_device(self):
@@ -62,18 +90,38 @@ class EndpointTests(InboxTestCaseMixin, TransactionTestCase):
         self.client.force_login(user)
 
         # Mock the response from Google
-        responses.add(responses.POST, 'https://fcm.googleapis.com/fcm/notification',
-                      json={'notification_key': '0987654321poiuytrewq'})
+        responses.add(
+            responses.POST,
+            "https://oauth2.googleapis.com/token",
+            json={
+                "access_token": "1/fFAGRNJru1FTz70BzhT3Zg",
+                "expires_in": 3920,
+                "token_type": "Bearer",
+                "scope": "https://www.googleapis.com/auth/drive.metadata.readonly",
+                "refresh_token": "1//xEoDL4iW3cxlI7yDbSRFYNG01kVKM2C-259HOF2aQbI",
+            },
+        )
 
-        registration_token = 'abcdef123'
-        response = self.post(f'/api/v1/users/{user_id}/devices', {'registration_token': 'abcdef123'})
+        responses.add(
+            responses.POST,
+            "https://fcm.googleapis.com/fcm/notification",
+            json={"notification_key": "0987654321poiuytrewq"},
+        )
+
+        registration_token = "abcdef123"
+        response = self.post(
+            f"/api/v1/users/{user_id}/devices", {"registration_token": "abcdef123"}
+        )
         self.assertHTTP201(response)
 
         # Mock the response from Google
-        responses.add(responses.POST, 'https://fcm.googleapis.com/fcm/notification',
-                      json={'notification_key': '0987654321poiuytrewq'})
+        responses.add(
+            responses.POST,
+            "https://fcm.googleapis.com/fcm/notification",
+            json={"notification_key": "0987654321poiuytrewq"},
+        )
 
-        response = self.delete(f'/api/v1/devices/{registration_token}')
+        response = self.delete(f"/api/v1/devices/{registration_token}")
         self.assertHTTP204(response)
 
     @responses.activate
@@ -89,21 +137,23 @@ class EndpointTests(InboxTestCaseMixin, TransactionTestCase):
         handler = MagicMock()
         signals.unread_count.connect(handler, sender=Message)
 
-        response = self.patch(f'/api/v1/users/{user_id}', {'first_name': 'Test'})
+        response = self.patch(f"/api/v1/users/{user_id}", {"first_name": "Test"})
         self.assertHTTP200(response)
 
         process_new_messages()
         process_new_message_logs()
 
         # Assert the signal was called only once with the args
-        handler.assert_called_with(signal=signals.unread_count, count=1, sender=Message, user=user)
+        handler.assert_called_with(
+            signal=signals.unread_count, count=1, sender=Message, user=user
+        )
 
         # Verify there's an update_account message in Inbox and in model directly
-        response = self.get(f'/api/v1/users/{user_id}/messages')
+        response = self.get(f"/api/v1/users/{user_id}/messages")
         self.assertHTTP200(response)
         self.validate_list(response, messages)
-        self.assertTrue(len(response.data['results']), 1)
-        self.assertFalse(response.data['results'][0]['is_read'])
+        self.assertTrue(len(response.data["results"]), 1)
+        self.assertFalse(response.data["results"][0]["is_read"])
 
         message = Message.objects.filter(user_id=user_id)
         self.assertTrue(len(message), 1)
@@ -113,53 +163,69 @@ class EndpointTests(InboxTestCaseMixin, TransactionTestCase):
             process_new_messages()
             process_new_message_logs()
 
-            res = self.get(f'/api/v1/users/{user_id}/messages')
+            res = self.get(f"/api/v1/users/{user_id}/messages")
             self.assertHTTP200(res)
-            self.assertTrue(len(res.data['results']), 2)
+            self.assertTrue(len(res.data["results"]), 2)
 
-            self.assertTrue(int(res.data['results'][0]['id']) > int(res.data['results'][1]['id']))
+            self.assertTrue(
+                int(res.data["results"][0]["id"]) > int(res.data["results"][1]["id"])
+            )
 
-            self.assertFalse(res.data['results'][0]['is_read'])
-            self.assertEqual(res.data['results'][0]['subject'], 'Account Updated Subject')
-            self.assertEqual(res.data['results'][0]['body'], 'Account updated body excerpt.')
-            self.assertEqual(res.data['results'][0]['group'], {'id': 'account_updated',
-                                                               'label': 'Account Updated',
-                                                               'data': {}})
-            self.assertIsNone(res.data['results'][0]['data'])
+            self.assertFalse(res.data["results"][0]["is_read"])
+            self.assertEqual(
+                res.data["results"][0]["subject"], "Account Updated Subject"
+            )
+            self.assertEqual(
+                res.data["results"][0]["body"], "Account updated body excerpt."
+            )
+            self.assertEqual(
+                res.data["results"][0]["group"],
+                {"id": "account_updated", "label": "Account Updated", "data": {}},
+            )
+            self.assertIsNone(res.data["results"][0]["data"])
 
-            self.assertFalse(res.data['results'][1]['is_read'])
-            self.assertEqual(res.data['results'][1]['subject'], 'Account Updated Subject')
-            self.assertEqual(res.data['results'][1]['body'], 'Account updated body excerpt.')
-            self.assertEqual(res.data['results'][1]['group'], {'id': 'account_updated',
-                                                               'label': 'Account Updated',
-                                                               'data': {}})
-            self.assertIsNone(res.data['results'][1]['data'])
+            self.assertFalse(res.data["results"][1]["is_read"])
+            self.assertEqual(
+                res.data["results"][1]["subject"], "Account Updated Subject"
+            )
+            self.assertEqual(
+                res.data["results"][1]["body"], "Account updated body excerpt."
+            )
+            self.assertEqual(
+                res.data["results"][1]["group"],
+                {"id": "account_updated", "label": "Account Updated", "data": {}},
+            )
+            self.assertIsNone(res.data["results"][1]["data"])
 
             # Assert the signal was called only once with the args
-            handler.assert_called_with(signal=signals.unread_count, count=2, sender=Message, user=user)
+            handler.assert_called_with(
+                signal=signals.unread_count, count=2, sender=Message, user=user
+            )
 
             self.assertEqual(len(app_push.outbox), 4)
 
             # Pull individual message to get full body
             res = self.get(f'/api/v1/messages/{res.data["results"][0]["id"]}')
             self.assertHTTP200(res)
-            self.assertEqual(res.data['body'], 'Account updated body.')
+            self.assertEqual(res.data["body"], "Account updated body.")
 
             # Mark them as read
-            response = self.post(f'/api/v1/users/{user_id}/messages/read')
+            response = self.post(f"/api/v1/users/{user_id}/messages/read")
             self.assertHTTP200(response)
 
             # Assert the signal was called only once with the args
-            handler.assert_called_with(signal=signals.unread_count, count=0, sender=Message, user=user)
+            handler.assert_called_with(
+                signal=signals.unread_count, count=0, sender=Message, user=user
+            )
 
             self.assertEqual(len(app_push.outbox), 5)
 
-            response = self.get(f'/api/v1/users/{user_id}/messages')
+            response = self.get(f"/api/v1/users/{user_id}/messages")
             self.assertHTTP200(response)
-            self.assertTrue(len(response.data['results']), 2)
+            self.assertTrue(len(response.data["results"]), 2)
 
-            self.assertTrue(response.data['results'][0]['is_read'])
-            self.assertTrue(response.data['results'][1]['is_read'])
+            self.assertTrue(response.data["results"][0]["is_read"])
+            self.assertTrue(response.data["results"][1]["is_read"])
 
         process_new_messages()
 
@@ -197,7 +263,7 @@ class EndpointTests(InboxTestCaseMixin, TransactionTestCase):
         user = User.objects.get(pk=user_id)
         self.client.force_login(user)
 
-        response = self.client.get(f'/api/v1/users/2/message_preferences')
+        response = self.client.get(f"/api/v1/users/2/message_preferences")
         self.assertHTTP403(response)
 
     def test_message_preferences(self):
@@ -209,55 +275,60 @@ class EndpointTests(InboxTestCaseMixin, TransactionTestCase):
         # Update default message preference
         response = self._get_message_preferences(user.pk)
         self.validate(response.data, message_preferences)
-        all_group_ids = [group['id'] for group in response.data['results']]
-        self.assertNotIn('inbox_only', all_group_ids)
-        response.data['results'][0]['app_push'] = False
-        response = self.client.put(f'/api/v1/users/{user.pk}/message_preferences', response.data)
+        all_group_ids = [group["id"] for group in response.data["results"]]
+        self.assertNotIn("inbox_only", all_group_ids)
+        response.data["results"][0]["app_push"] = False
+        response = self.client.put(
+            f"/api/v1/users/{user.pk}/message_preferences", response.data
+        )
         self.assertHTTP200(response)
-        self.assertFalse(response.data['results'][0]['app_push'])
-        self.assertTrue(response.data['results'][0]['email'])
-        self.assertTrue(response.data['results'][1]['app_push'])
+        self.assertFalse(response.data["results"][0]["app_push"])
+        self.assertTrue(response.data["results"][0]["email"])
+        self.assertTrue(response.data["results"][1]["app_push"])
 
         # Case 2
         # Update default message preference with mediums that don't exist, shouldn't error, but also not get stored
-        response.data['results'][0]['app_push'] = False
-        response.data['results'][0]['tester'] = False
-        response = self.client.put(f'/api/v1/users/{user.pk}/message_preferences', response.data)
+        response.data["results"][0]["app_push"] = False
+        response.data["results"][0]["tester"] = False
+        response = self.client.put(
+            f"/api/v1/users/{user.pk}/message_preferences", response.data
+        )
         self.assertHTTP200(response)
-        self.assertFalse(response.data['results'][0]['app_push'])
-        self.assertTrue(response.data['results'][0]['email'])
-        self.assertTrue(response.data['results'][1]['app_push'])
-        self.assertFalse('tester' in response.data['results'][0])
+        self.assertFalse(response.data["results"][0]["app_push"])
+        self.assertTrue(response.data["results"][0]["email"])
+        self.assertTrue(response.data["results"][1]["app_push"])
+        self.assertFalse("tester" in response.data["results"][0])
 
         # Case 3
         # Make sure it's actually in the DB that way
         res_user = User.objects.get(pk=user.pk)
-        self.assertFalse('tester' in res_user.message_preferences.groups[0])
+        self.assertFalse("tester" in res_user.message_preferences.groups[0])
 
         # Add preference that isn't valid (eg no id in defaults)
-        response.data['results'].append({
-            'id': 'fake',
-            'app_push': True
-        })
-        response = self.client.put(f'/api/v1/users/{user.pk}/message_preferences', response.data)
+        response.data["results"].append({"id": "fake", "app_push": True})
+        response = self.client.put(
+            f"/api/v1/users/{user.pk}/message_preferences", response.data
+        )
         self.assertHTTP200(response)
 
-        for group in response.data['results']:
-            self.assertNotEqual(group['id'], 'fake')
+        for group in response.data["results"]:
+            self.assertNotEqual(group["id"], "fake")
         res_user = User.objects.get(pk=user.pk)
         for group in res_user.message_preferences._groups:
-            self.assertNotEqual(group['id'], 'fake')
+            self.assertNotEqual(group["id"], "fake")
 
         # Case 4
         # Reverse order before saving and make sure comes back in the correct order (as defined by defaults)
-        response = self.client.get(f'/api/v1/users/{user.pk}/message_preferences')
-        response.data['results'].reverse()
-        response = self.client.put(f'/api/v1/users/{user.pk}/message_preferences', response.data)
+        response = self.client.get(f"/api/v1/users/{user.pk}/message_preferences")
+        response.data["results"].reverse()
+        response = self.client.put(
+            f"/api/v1/users/{user.pk}/message_preferences", response.data
+        )
         self.assertHTTP200(response)
-        self.assertEqual(response.data['results'][0]['id'], 'default')
-        self.assertEqual(response.data['results'][1]['id'], 'account_updated')
-        self.assertEqual(response.data['results'][2]['id'], 'friend_requests')
-        self.assertEqual(response.data['results'][3]['id'], 'important_updates')
+        self.assertEqual(response.data["results"][0]["id"], "default")
+        self.assertEqual(response.data["results"][1]["id"], "account_updated")
+        self.assertEqual(response.data["results"][2]["id"], "friend_requests")
+        self.assertEqual(response.data["results"][3]["id"], "important_updates")
 
         # We use lru_cache on INBOX_CONFIG, clear it out
         inbox_settings.get_config.cache_clear()
@@ -266,68 +337,73 @@ class EndpointTests(InboxTestCaseMixin, TransactionTestCase):
 
         # Then override the INBOX_CONFIG setting, we'll add a new message group and see it we get the expected return
         INBOX_CONFIG = settings.INBOX_CONFIG.copy()
-        MESSAGE_GROUPS = INBOX_CONFIG['MESSAGE_GROUPS'].copy()
-        MESSAGE_GROUPS.append({
-            'id': 'test_1',
-            'label': 'Test 1',
-            'description': 'Test 1 description.',
-            'is_preference': True,
-            'use_preference': None,
-            'preference_defaults': {
-                'app_push': True,
-                'email': True,
-                'sms': None,
-                'web_push': None
-            },
-            'message_keys': ['test_1']
-        })
-        INBOX_CONFIG['MESSAGE_GROUPS'] = MESSAGE_GROUPS
+        MESSAGE_GROUPS = INBOX_CONFIG["MESSAGE_GROUPS"].copy()
+        MESSAGE_GROUPS.append(
+            {
+                "id": "test_1",
+                "label": "Test 1",
+                "description": "Test 1 description.",
+                "is_preference": True,
+                "use_preference": None,
+                "preference_defaults": {
+                    "app_push": True,
+                    "email": True,
+                    "sms": None,
+                    "web_push": None,
+                },
+                "message_keys": ["test_1"],
+            }
+        )
+        INBOX_CONFIG["MESSAGE_GROUPS"] = MESSAGE_GROUPS
         with self.settings(INBOX_CONFIG=INBOX_CONFIG):
             response = self._get_message_preferences(user.pk)
-            self.assertEqual(response.data['results'][7]['id'], 'test_1')
-            self.assertTrue(response.data['results'][7]['app_push'])
-            self.assertTrue(response.data['results'][7]['email'])
+            self.assertEqual(response.data["results"][7]["id"], "test_1")
+            self.assertTrue(response.data["results"][7]["app_push"])
+            self.assertTrue(response.data["results"][7]["email"])
 
         # Then override the INBOX_CONFIG setting, we'll add a new message group to the front
         #  and see it we get the expected return
         inbox_settings.get_config.cache_clear()
         get_message_group.cache_clear()
         get_message_groups.cache_clear()
-        MESSAGE_GROUPS.insert(0, {
-            'id': 'test_2',
-            'label': 'Test 2',
-            'description': 'Test 2 description.',
-            'is_preference': True,
-            'use_preference': None,
-            'preference_defaults': {
-                'app_push': True,
-                'email': False,
-                'sms': None,
-                'web_push': None
+        MESSAGE_GROUPS.insert(
+            0,
+            {
+                "id": "test_2",
+                "label": "Test 2",
+                "description": "Test 2 description.",
+                "is_preference": True,
+                "use_preference": None,
+                "preference_defaults": {
+                    "app_push": True,
+                    "email": False,
+                    "sms": None,
+                    "web_push": None,
+                },
+                "message_keys": ["test_2"],
             },
-            'message_keys': ['test_2']
-        })
-        INBOX_CONFIG['MESSAGE_GROUPS'] = MESSAGE_GROUPS
+        )
+        INBOX_CONFIG["MESSAGE_GROUPS"] = MESSAGE_GROUPS
         with self.settings(INBOX_CONFIG=INBOX_CONFIG):
             response = self._get_message_preferences(user.pk)
-            self.assertEqual(response.data['results'][0]['id'], 'test_2')
-            self.assertTrue(response.data['results'][0]['app_push'])
-            self.assertFalse(response.data['results'][0]['email'])
-            self.assertEqual(response.data['results'][8]['id'], 'test_1')
-            self.assertTrue(response.data['results'][8]['app_push'])
-            self.assertTrue(response.data['results'][8]['email'])
+            self.assertEqual(response.data["results"][0]["id"], "test_2")
+            self.assertTrue(response.data["results"][0]["app_push"])
+            self.assertFalse(response.data["results"][0]["email"])
+            self.assertEqual(response.data["results"][8]["id"], "test_1")
+            self.assertTrue(response.data["results"][8]["app_push"])
+            self.assertTrue(response.data["results"][8]["email"])
 
         # Verify it wasn't saved to user, since user didn't save/update it
         user.refresh_from_db()
 
         # The _groups property is the actual underlying field on the table
-        self.assertTrue(user.message_preferences._groups[0]['id'], 'default')
-        self.assertTrue(user.message_preferences._groups[3]['id'], 'important_updates')
+        self.assertTrue(user.message_preferences._groups[0]["id"], "default")
+        self.assertTrue(user.message_preferences._groups[3]["id"], "important_updates")
         self.assertTrue(len(user.message_preferences._groups), 4)
 
         for group in user.message_preferences._groups:
-            self.assertNotEqual(group['id'], 'test_1')
-            self.assertNotEqual(group['id'], 'test_2')
+            self.assertNotEqual(group["id"], "test_1")
+            self.assertNotEqual(group["id"], "test_2")
 
         # Now remove a setting and verify it doesn't come back on endpoint but is still stored on user after saving
         #  we do this so that a preference that is brought back and a user had chosen to enable/disable it we'd still
@@ -335,25 +411,25 @@ class EndpointTests(InboxTestCaseMixin, TransactionTestCase):
         inbox_settings.get_config.cache_clear()
         get_message_group.cache_clear()
         get_message_groups.cache_clear()
-        INBOX_CONFIG['MESSAGE_GROUPS'] = [INBOX_CONFIG['MESSAGE_GROUPS'][0]]
+        INBOX_CONFIG["MESSAGE_GROUPS"] = [INBOX_CONFIG["MESSAGE_GROUPS"][0]]
         with self.settings(INBOX_CONFIG=INBOX_CONFIG):
-            response = self.client.get(f'/api/v1/users/{user.pk}/message_preferences')
-            self.assertEqual(response.data['results'][0]['id'], 'test_2')
-            self.assertTrue(response.data['results'][0]['app_push'])
-            self.assertFalse(response.data['results'][0]['email'])
-            self.assertTrue(len(response.data['results']), 1)
+            response = self.client.get(f"/api/v1/users/{user.pk}/message_preferences")
+            self.assertEqual(response.data["results"][0]["id"], "test_2")
+            self.assertTrue(response.data["results"][0]["app_push"])
+            self.assertFalse(response.data["results"][0]["email"])
+            self.assertTrue(len(response.data["results"]), 1)
 
         # Verify it wasn't saved to user, since user didn't save/update it
         user.refresh_from_db()
 
         # The _groups property is the actual underlying field on the table
-        self.assertTrue(user.message_preferences._groups[0]['id'], 'default')
-        self.assertTrue(user.message_preferences._groups[3]['id'], 'important_updates')
+        self.assertTrue(user.message_preferences._groups[0]["id"], "default")
+        self.assertTrue(user.message_preferences._groups[3]["id"], "important_updates")
         self.assertTrue(len(user.message_preferences._groups), 4)
 
         for group in user.message_preferences._groups:
-            self.assertNotEqual(group['id'], 'test_1')
-            self.assertNotEqual(group['id'], 'test_2')
+            self.assertNotEqual(group["id"], "test_1")
+            self.assertNotEqual(group["id"], "test_2")
 
         inbox_settings.get_config.cache_clear()
         get_message_group.cache_clear()
@@ -361,33 +437,38 @@ class EndpointTests(InboxTestCaseMixin, TransactionTestCase):
         with self.settings(INBOX_CONFIG=INBOX_CONFIG):
             # Now save the single message group we have, it should still keep the old ones and include the new one even
             #  though they won't be returned in the API
-            response = self.client.put(f'/api/v1/users/{user.pk}/message_preferences', response.data)
+            response = self.client.put(
+                f"/api/v1/users/{user.pk}/message_preferences", response.data
+            )
             self.assertHTTP200(response)
-            self.assertEqual(response.data['results'][0]['id'], 'test_2')
-            self.assertTrue(response.data['results'][0]['app_push'])
-            self.assertFalse(response.data['results'][0]['email'])
-            self.assertEqual(len(response.data['results']), 1)
+            self.assertEqual(response.data["results"][0]["id"], "test_2")
+            self.assertTrue(response.data["results"][0]["app_push"])
+            self.assertFalse(response.data["results"][0]["email"])
+            self.assertEqual(len(response.data["results"]), 1)
 
             # Fetch it, verify the fetch is correct as well
-            response = self.client.get(f'/api/v1/users/{user.pk}/message_preferences')
+            response = self.client.get(f"/api/v1/users/{user.pk}/message_preferences")
             self.assertHTTP200(response)
-            self.assertEqual(response.data['results'][0]['id'], 'test_2')
-            self.assertTrue(response.data['results'][0]['app_push'])
-            self.assertFalse(response.data['results'][0]['email'])
-            self.assertEqual(len(response.data['results']), 1)
+            self.assertEqual(response.data["results"][0]["id"], "test_2")
+            self.assertTrue(response.data["results"][0]["app_push"])
+            self.assertFalse(response.data["results"][0]["email"])
+            self.assertEqual(len(response.data["results"]), 1)
 
         # Verify it was saved to user
         user.refresh_from_db()
 
         # The _groups property is the actual underlying field on the table
         # Verify that label and description aren't stored in the DB for the user
-        self.assertEqual(list(user.message_preferences._groups[0]).sort(), ['id', 'app_push', 'email'].sort())
-        self.assertTrue(user.message_preferences._groups[0]['id'], 'test_2')
-        self.assertTrue(user.message_preferences._groups[4]['id'], 'important_updates')
+        self.assertEqual(
+            list(user.message_preferences._groups[0]).sort(),
+            ["id", "app_push", "email"].sort(),
+        )
+        self.assertTrue(user.message_preferences._groups[0]["id"], "test_2")
+        self.assertTrue(user.message_preferences._groups[4]["id"], "important_updates")
         self.assertTrue(len(user.message_preferences._groups), 5)
 
         for group in user.message_preferences._groups:
-            self.assertNotEqual(group['id'], 'test_1')
+            self.assertNotEqual(group["id"], "test_1")
 
         inbox_settings.get_config.cache_clear()
         get_message_group.cache_clear()
@@ -402,22 +483,29 @@ class EndpointTests(InboxTestCaseMixin, TransactionTestCase):
         # Update default message preference
         response = self._get_message_preferences(user.pk)
         self.validate(response.data, message_preferences)
-        message_preference = response.data['results'][0]
-        response = self.client.put(f'/api/v1/users/{user.pk}/message_preferences/{message_preference["id"]}/app_push',
-                                   False)
+        message_preference = response.data["results"][0]
+        response = self.client.put(
+            f'/api/v1/users/{user.pk}/message_preferences/{message_preference["id"]}/app_push',
+            False,
+        )
         self.assertHTTP200(response)
         self.assertFalse(response.data)
-        response = self.client.put(f'/api/v1/users/{user.pk}/message_preferences/{message_preference["id"]}/app_push',
-                                   True)
+        response = self.client.put(
+            f'/api/v1/users/{user.pk}/message_preferences/{message_preference["id"]}/app_push',
+            True,
+        )
         self.assertHTTP200(response)
         self.assertTrue(response.data)
 
-        response = self.client.put(f'/api/v1/users/{user.pk}/message_preferences/{message_preference["id"]}/fake',
-                                   True)
+        response = self.client.put(
+            f'/api/v1/users/{user.pk}/message_preferences/{message_preference["id"]}/fake',
+            True,
+        )
         self.assertHTTP400(response)
 
-        response = self.client.put(f'/api/v1/users/{user.pk}/message_preferences/fake/app_push',
-                                   True)
+        response = self.client.put(
+            f"/api/v1/users/{user.pk}/message_preferences/fake/app_push", True
+        )
         self.assertHTTP400(response)
 
     def test_get_messages_by_non_owner(self):
@@ -425,7 +513,7 @@ class EndpointTests(InboxTestCaseMixin, TransactionTestCase):
         user = User.objects.get(pk=user_id)
         self.client.force_login(user)
 
-        response = self.get(f'/api/v1/users/2/messages')
+        response = self.get(f"/api/v1/users/2/messages")
         self.assertHTTP403(response)
 
     def test_get_message_for_user(self):
@@ -434,52 +522,52 @@ class EndpointTests(InboxTestCaseMixin, TransactionTestCase):
         self.client.force_login(user)
 
         # Update user, this triggers message in our test app
-        response = self.patch(f'/api/v1/users/{user_id}', {'first_name': 'Test'})
+        response = self.patch(f"/api/v1/users/{user_id}", {"first_name": "Test"})
         self.assertHTTP200(response)
 
         process_new_messages()
         process_new_message_logs()
 
         # Verify there's an update_account message in Inbox and in model directly
-        response = self.get(f'/api/v1/users/{user_id}/messages')
-        message_id = response.data['results'][0]['id']
+        response = self.get(f"/api/v1/users/{user_id}/messages")
+        message_id = response.data["results"][0]["id"]
         self.assertHTTP200(response)
         self.validate_list(response, messages)
-        self.assertTrue(len(response.data['results']), 1)
+        self.assertTrue(len(response.data["results"]), 1)
 
         process_new_messages()
         process_new_message_logs()
 
         # Get individual message
-        response = self.get(f'/api/v1/messages/{message_id}')
+        response = self.get(f"/api/v1/messages/{message_id}")
         self.assertHTTP200(response)
         self.validate(response.data, message)
 
         # Logout and try to grab it
         self.client.logout()
-        response = self.get(f'/api/v1/messages/{message_id}')
+        response = self.get(f"/api/v1/messages/{message_id}")
         self.assertHTTP401(response)
 
         # Login as different user and try to pull
         user = User.objects.get(pk=2)
         self.client.force_login(user)
-        response = self.get(f'/api/v1/messages/{message_id}')
+        response = self.get(f"/api/v1/messages/{message_id}")
         self.assertHTTP403(response)
 
         # Mark as read
         self.client.logout()
         user = User.objects.get(pk=user_id)
         self.client.force_login(user)
-        response = self.put(f'/api/v1/messages/{message_id}', {'is_read': True})
+        response = self.put(f"/api/v1/messages/{message_id}", {"is_read": True})
         self.assertHTTP200(response)
         self.validate(response.data, message)
-        self.assertTrue(response.data['is_read'])
+        self.assertTrue(response.data["is_read"])
 
         # Mark as unread
-        response = self.put(f'/api/v1/messages/{message_id}', {'is_read': False})
+        response = self.put(f"/api/v1/messages/{message_id}", {"is_read": False})
         self.assertHTTP200(response)
         self.validate(response.data, message)
-        self.assertFalse(response.data['is_read'])
+        self.assertFalse(response.data["is_read"])
 
     def test_delete_message(self):
         user_id = 1
@@ -487,33 +575,33 @@ class EndpointTests(InboxTestCaseMixin, TransactionTestCase):
         self.client.force_login(user)
 
         # Update user, this triggers message in our test app
-        response = self.patch(f'/api/v1/users/{user_id}', {'first_name': 'Test'})
+        response = self.patch(f"/api/v1/users/{user_id}", {"first_name": "Test"})
         self.assertHTTP200(response)
 
         process_new_messages()
         process_new_message_logs()
 
         # Verify there's an update_account message in Inbox and in model directly
-        response = self.get(f'/api/v1/users/{user_id}/messages')
-        message_id = response.data['results'][0]['id']
+        response = self.get(f"/api/v1/users/{user_id}/messages")
+        message_id = response.data["results"][0]["id"]
         self.assertHTTP200(response)
         self.validate_list(response, messages)
-        self.assertTrue(len(response.data['results']), 1)
+        self.assertTrue(len(response.data["results"]), 1)
 
         process_new_messages()
         process_new_message_logs()
 
         # Delete message, make sure it doesn't come back in list
-        response = self.delete(f'/api/v1/messages/{message_id}')
+        response = self.delete(f"/api/v1/messages/{message_id}")
         self.assertHTTP204(response)
 
         # Verify at the model level that it has a deleted time
         message = Message.objects.get(pk=message_id)
         self.assertIsNotNone(message.deleted_at)
 
-        response = self.get(f'/api/v1/users/{user_id}/messages')
+        response = self.get(f"/api/v1/users/{user_id}/messages")
         self.assertHTTP200(response)
-        self.assertEqual(len(response.data['results']), 0)
+        self.assertEqual(len(response.data["results"]), 0)
 
     def test_message_that_never_generates_message_log_should_not_be_visible(self):
         user_id = 1
@@ -521,20 +609,24 @@ class EndpointTests(InboxTestCaseMixin, TransactionTestCase):
         self.client.force_login(user)
 
         future_send_at = timezone.now() + timezone.timedelta(days=2)
-        message = Message.objects.create(user=user, key='new_friend_request', fail_silently=False,
-                                         send_at=future_send_at)
+        message = Message.objects.create(
+            user=user,
+            key="new_friend_request",
+            fail_silently=False,
+            send_at=future_send_at,
+        )
 
-        response = self.get(f'/api/v1/users/{user_id}/messages')
+        response = self.get(f"/api/v1/users/{user_id}/messages")
 
-        self.assertEqual(len(response.data['results']), 0)
+        self.assertEqual(len(response.data["results"]), 0)
 
         with freeze_time(future_send_at):
             process_new_messages()
             process_new_message_logs()
 
-            response = self.get(f'/api/v1/users/{user_id}/messages')
+            response = self.get(f"/api/v1/users/{user_id}/messages")
 
-            self.assertEqual(len(response.data['results']), 0)
+            self.assertEqual(len(response.data["results"]), 0)
 
         # Check and see if message is set to is_hidden=True and is_logged=True
 
@@ -547,7 +639,7 @@ class EndpointTests(InboxTestCaseMixin, TransactionTestCase):
         user_id = 1
         user = User.objects.get(pk=user_id)
 
-        response = self.get(f'/api/v1/users/{user_id}/messages/unread-count')
+        response = self.get(f"/api/v1/users/{user_id}/messages/unread-count")
         self.assertHTTP401(response)
 
         self.client.force_login(user)
@@ -555,26 +647,26 @@ class EndpointTests(InboxTestCaseMixin, TransactionTestCase):
         handler = MagicMock()
         signals.unread_count.connect(handler, sender=Message)
 
-        response = self.get(f'/api/v1/users/{user_id}/messages/unread-count')
+        response = self.get(f"/api/v1/users/{user_id}/messages/unread-count")
 
         self.assertHTTP200(response)
         self.assertEqual(response.data, 0)
 
-        response = self.patch(f'/api/v1/users/{user_id}', {'first_name': 'Test'})
+        response = self.patch(f"/api/v1/users/{user_id}", {"first_name": "Test"})
         self.assertHTTP200(response)
 
-        response = self.get(f'/api/v1/users/{user_id}/messages/unread-count')
+        response = self.get(f"/api/v1/users/{user_id}/messages/unread-count")
 
         self.assertHTTP200(response)
         self.assertEqual(response.data, 1)
         self.validate(response.data, unread_count)
-        
+
     def test_fetching_unread_count_with_underscore_path(self):
 
         user_id = 1
         user = User.objects.get(pk=user_id)
 
-        response = self.get(f'/api/v1/users/{user_id}/messages/unread_count')
+        response = self.get(f"/api/v1/users/{user_id}/messages/unread_count")
         self.assertHTTP401(response)
 
         self.client.force_login(user)
@@ -582,15 +674,15 @@ class EndpointTests(InboxTestCaseMixin, TransactionTestCase):
         handler = MagicMock()
         signals.unread_count.connect(handler, sender=Message)
 
-        response = self.get(f'/api/v1/users/{user_id}/messages/unread_count')
+        response = self.get(f"/api/v1/users/{user_id}/messages/unread_count")
 
         self.assertHTTP200(response)
         self.assertEqual(response.data, 0)
 
-        response = self.patch(f'/api/v1/users/{user_id}', {'first_name': 'Test'})
+        response = self.patch(f"/api/v1/users/{user_id}", {"first_name": "Test"})
         self.assertHTTP200(response)
 
-        response = self.get(f'/api/v1/users/{user_id}/messages/unread_count')
+        response = self.get(f"/api/v1/users/{user_id}/messages/unread_count")
 
         self.assertHTTP200(response)
         self.assertEqual(response.data, 1)
@@ -601,7 +693,7 @@ class EndpointTests(InboxTestCaseMixin, TransactionTestCase):
         user = User.objects.get(pk=user_id_1)
         self.client.force_login(user)
 
-        response = self.patch(f'/api/v1/users/{user_id_1}', {'first_name': 'Test'})
+        response = self.patch(f"/api/v1/users/{user_id_1}", {"first_name": "Test"})
         self.assertHTTP200(response)
 
         self.client.logout()
@@ -610,7 +702,7 @@ class EndpointTests(InboxTestCaseMixin, TransactionTestCase):
         user = User.objects.get(pk=user_id_2)
         self.client.force_login(user)
 
-        response = self.get(f'/api/v1/users/{user_id_1}/messages/unread_count')
+        response = self.get(f"/api/v1/users/{user_id_1}/messages/unread_count")
 
         self.assertHTTP403(response)
 
@@ -619,7 +711,7 @@ class EndpointTests(InboxTestCaseMixin, TransactionTestCase):
         user = User.objects.get(pk=user_id_1)
         self.client.force_login(user)
 
-        response = self.put(f'/api/v1/users/{user_id_1}/messages/unread_count', {})
+        response = self.put(f"/api/v1/users/{user_id_1}/messages/unread_count", {})
 
         self.assertHTTP405(response)
 
@@ -628,7 +720,7 @@ class EndpointTests(InboxTestCaseMixin, TransactionTestCase):
         user = User.objects.get(pk=user_id_1)
         self.client.force_login(user)
 
-        response = self.delete(f'/api/v1/users/{user_id_1}/messages/unread_count')
+        response = self.delete(f"/api/v1/users/{user_id_1}/messages/unread_count")
 
         self.assertHTTP405(response)
 
@@ -637,7 +729,7 @@ class EndpointTests(InboxTestCaseMixin, TransactionTestCase):
         user = User.objects.get(pk=user_id_1)
         self.client.force_login(user)
 
-        response = self.post(f'/api/v1/users/{user_id_1}/messages/unread_count', {})
+        response = self.post(f"/api/v1/users/{user_id_1}/messages/unread_count", {})
 
         self.assertHTTP405(response)
 
@@ -648,9 +740,9 @@ class EndpointTests(InboxTestCaseMixin, TransactionTestCase):
 
         signer = Signer()
         value = signer.sign(user.pk)
-        token = base64.urlsafe_b64encode(value.encode('ascii')).decode('utf8')
+        token = base64.urlsafe_b64encode(value.encode("ascii")).decode("utf8")
 
-        response = self.get(f'/api/v1/message-preferences/{token}')
+        response = self.get(f"/api/v1/message-preferences/{token}")
 
         self.assertHTTP200(response)
         self.validate(response.data, message_preferences)
@@ -662,23 +754,25 @@ class EndpointTests(InboxTestCaseMixin, TransactionTestCase):
 
         signer = Signer()
         value = signer.sign(user.pk)
-        token = base64.urlsafe_b64encode(value.encode('ascii')).decode('utf8')
+        token = base64.urlsafe_b64encode(value.encode("ascii")).decode("utf8")
 
-        response = self.get(f'/api/v1/message-preferences/{token}')
+        response = self.get(f"/api/v1/message-preferences/{token}")
 
         self.assertHTTP200(response)
         self.validate(response.data, message_preferences)
 
-    def test_get_message_preferences_by_token_while_authenticated_as_different_user(self):
+    def test_get_message_preferences_by_token_while_authenticated_as_different_user(
+        self,
+    ):
         user_id = 1
         user = User.objects.get(pk=user_id)
         self.client.force_login(user=user)
 
         signer = Signer()
         value = signer.sign(2)
-        token = base64.urlsafe_b64encode(value.encode('ascii')).decode('utf8')
+        token = base64.urlsafe_b64encode(value.encode("ascii")).decode("utf8")
 
-        response = self.get(f'/api/v1/message-preferences/{token}')
+        response = self.get(f"/api/v1/message-preferences/{token}")
 
         self.assertHTTP403(response)
 
@@ -689,19 +783,19 @@ class EndpointTests(InboxTestCaseMixin, TransactionTestCase):
 
         signer = Signer()
         value = signer.sign(user.pk)
-        token = base64.urlsafe_b64encode(value.encode('ascii')).decode('utf8')
+        token = base64.urlsafe_b64encode(value.encode("ascii")).decode("utf8")
 
-        res = self.get(f'/api/v1/message-preferences/{token}')
+        res = self.get(f"/api/v1/message-preferences/{token}")
 
         self.assertHTTP200(res)
         self.validate(res.data, message_preferences)
-        self.assertTrue(res.data['results'][0]['email'])
+        self.assertTrue(res.data["results"][0]["email"])
 
-        res.data['results'][0]['email'] = False
-        res = self.put(f'/api/v1/message-preferences/{token}', res.data)
+        res.data["results"][0]["email"] = False
+        res = self.put(f"/api/v1/message-preferences/{token}", res.data)
         self.assertHTTP200(res)
         self.validate(res.data, message_preferences)
-        self.assertFalse(res.data['results'][0]['email'])
+        self.assertFalse(res.data["results"][0]["email"])
 
     def test_put_message_preferences_by_token_while_authenticated(self):
         user_id = 1
@@ -710,30 +804,32 @@ class EndpointTests(InboxTestCaseMixin, TransactionTestCase):
 
         signer = Signer()
         value = signer.sign(user.pk)
-        token = base64.urlsafe_b64encode(value.encode('ascii')).decode('utf8')
+        token = base64.urlsafe_b64encode(value.encode("ascii")).decode("utf8")
 
-        res = self.get(f'/api/v1/message-preferences/{token}')
+        res = self.get(f"/api/v1/message-preferences/{token}")
 
         self.assertHTTP200(res)
         self.validate(res.data, message_preferences)
-        self.assertTrue(res.data['results'][0]['email'])
+        self.assertTrue(res.data["results"][0]["email"])
 
-        res.data['results'][0]['email'] = False
-        res = self.put(f'/api/v1/message-preferences/{token}', res.data)
+        res.data["results"][0]["email"] = False
+        res = self.put(f"/api/v1/message-preferences/{token}", res.data)
         self.assertHTTP200(res)
         self.validate(res.data, message_preferences)
-        self.assertFalse(res.data['results'][0]['email'])
+        self.assertFalse(res.data["results"][0]["email"])
 
-    def test_put_message_preferences_by_token_while_authenticated_as_different_user(self):
+    def test_put_message_preferences_by_token_while_authenticated_as_different_user(
+        self,
+    ):
         user_id = 1
         user = User.objects.get(pk=user_id)
         self.client.force_login(user=user)
 
         signer = Signer()
         value = signer.sign(2)
-        token = base64.urlsafe_b64encode(value.encode('ascii')).decode('utf8')
+        token = base64.urlsafe_b64encode(value.encode("ascii")).decode("utf8")
 
-        res = self.get(f'/api/v1/message-preferences/{token}')
+        res = self.get(f"/api/v1/message-preferences/{token}")
 
         self.assertHTTP403(res)
 
@@ -744,15 +840,15 @@ class EndpointTests(InboxTestCaseMixin, TransactionTestCase):
 
         signer = Signer()
         value = signer.sign(user.pk)
-        token = base64.urlsafe_b64encode(value.encode('ascii')).decode('utf8')
+        token = base64.urlsafe_b64encode(value.encode("ascii")).decode("utf8")
 
-        res = self.get(f'/api/v1/message-preferences/{token}')
+        res = self.get(f"/api/v1/message-preferences/{token}")
 
         self.assertHTTP200(res)
         self.validate(res.data, message_preferences)
-        self.assertTrue(res.data['results'][0]['email'])
+        self.assertTrue(res.data["results"][0]["email"])
 
-        res = self.put(f'/api/v1/message-preferences/{token}/default/email', False)
+        res = self.put(f"/api/v1/message-preferences/{token}/default/email", False)
         self.assertHTTP200(res)
         self.assertFalse(res.data)
 
@@ -763,9 +859,9 @@ class EndpointTests(InboxTestCaseMixin, TransactionTestCase):
 
         signer = Signer()
         value = signer.sign(user.pk)
-        token = base64.urlsafe_b64encode(value.encode('ascii')).decode('utf8')
+        token = base64.urlsafe_b64encode(value.encode("ascii")).decode("utf8")
 
-        res = self.get(f'/api/v1/message-preferences/{token}/default/email')
+        res = self.get(f"/api/v1/message-preferences/{token}/default/email")
 
         self.assertHTTP200(res)
         self.assertTrue(res.data)
@@ -777,22 +873,24 @@ class EndpointTests(InboxTestCaseMixin, TransactionTestCase):
 
         signer = Signer()
         value = signer.sign(user.pk)
-        token = base64.urlsafe_b64encode(value.encode('ascii')).decode('utf8')
+        token = base64.urlsafe_b64encode(value.encode("ascii")).decode("utf8")
 
-        res = self.get(f'/api/v1/message-preferences/{token}/default/email')
+        res = self.get(f"/api/v1/message-preferences/{token}/default/email")
 
         self.assertHTTP200(res)
 
-    def test_get_single_message_preference_by_token_while_authenticated_as_different_user(self):
+    def test_get_single_message_preference_by_token_while_authenticated_as_different_user(
+        self,
+    ):
         user_id = 1
         user = User.objects.get(pk=user_id)
         self.client.force_login(user=user)
 
         signer = Signer()
         value = signer.sign(2)
-        token = base64.urlsafe_b64encode(value.encode('ascii')).decode('utf8')
+        token = base64.urlsafe_b64encode(value.encode("ascii")).decode("utf8")
 
-        res = self.get(f'/api/v1/message-preferences/{token}/default/email')
+        res = self.get(f"/api/v1/message-preferences/{token}/default/email")
 
         self.assertHTTP403(res)
 
@@ -807,19 +905,27 @@ class EndpointTests(InboxTestCaseMixin, TransactionTestCase):
         # Update default message preference
         res = self._get_message_preferences(self.user_1.pk)
         self.validate(res.data, message_preferences)
-        res.data['results'][0]['app_push'] = False
-        response = self.client.put(f'/api/v1/users/{self.user_1.pk}/message_preferences', res.data)
+        res.data["results"][0]["app_push"] = False
+        response = self.client.put(
+            f"/api/v1/users/{self.user_1.pk}/message_preferences", res.data
+        )
         self.assertHTTP200(response)
 
         # Assert the signal was called only once with the args
-        handler.assert_called_once_with(signal=signals.message_preferences_changed,
-                                        delta=[{'id': 'default',
-                                                'label': 'Updates',
-                                                'description': 'General news and updates.',
-                                                'data': {},
-                                                'app_push': False}],
-                                        sender=MessagePreferences,
-                                        user=self.user_1)
+        handler.assert_called_once_with(
+            signal=signals.message_preferences_changed,
+            delta=[
+                {
+                    "id": "default",
+                    "label": "Updates",
+                    "description": "General news and updates.",
+                    "data": {},
+                    "app_push": False,
+                }
+            ],
+            sender=MessagePreferences,
+            user=self.user_1,
+        )
 
     def test_change_multiple_message_preference_fires_signal(self):
 
@@ -832,16 +938,35 @@ class EndpointTests(InboxTestCaseMixin, TransactionTestCase):
         # Update default message preference
         res = self._get_message_preferences(self.user_1.pk)
         self.validate(res.data, message_preferences)
-        res.data['results'][0]['app_push'] = False
-        res.data['results'][1]['app_push'] = False
-        response = self.client.put(f'/api/v1/users/{self.user_1.pk}/message_preferences', res.data)
+        res.data["results"][0]["app_push"] = False
+        res.data["results"][1]["app_push"] = False
+        response = self.client.put(
+            f"/api/v1/users/{self.user_1.pk}/message_preferences", res.data
+        )
         self.assertHTTP200(response)
 
         # Assert the signal was called only once with the args
-        handler.assert_called_once_with(signal=signals.message_preferences_changed,
-                                        delta=[{'id': 'default', 'label': 'Updates', 'description': 'General news and updates.', 'data': {}, 'app_push': False}, {'id': 'account_updated', 'label': 'Account Updated', 'description': 'When you update your account.', 'data': {}, 'app_push': False}],
-                                        sender=MessagePreferences,
-                                        user=self.user_1)
+        handler.assert_called_once_with(
+            signal=signals.message_preferences_changed,
+            delta=[
+                {
+                    "id": "default",
+                    "label": "Updates",
+                    "description": "General news and updates.",
+                    "data": {},
+                    "app_push": False,
+                },
+                {
+                    "id": "account_updated",
+                    "label": "Account Updated",
+                    "description": "When you update your account.",
+                    "data": {},
+                    "app_push": False,
+                },
+            ],
+            sender=MessagePreferences,
+            user=self.user_1,
+        )
 
     def test_change_multiple_medium_message_preference_fires_signal(self):
         self.client.force_login(self.user_1)
@@ -853,21 +978,29 @@ class EndpointTests(InboxTestCaseMixin, TransactionTestCase):
         # Update default message preference
         res = self._get_message_preferences(self.user_1.pk)
         self.validate(res.data, message_preferences)
-        res.data['results'][0]['app_push'] = False
-        res.data['results'][0]['email'] = False
-        response = self.client.put(f'/api/v1/users/{self.user_1.pk}/message_preferences', res.data)
+        res.data["results"][0]["app_push"] = False
+        res.data["results"][0]["email"] = False
+        response = self.client.put(
+            f"/api/v1/users/{self.user_1.pk}/message_preferences", res.data
+        )
         self.assertHTTP200(response)
 
         # Assert the signal was called only once with the args
-        handler.assert_called_once_with(signal=signals.message_preferences_changed,
-                                        delta=[{'id': 'default',
-                                                'label': 'Updates',
-                                                'description': 'General news and updates.',
-                                                'data': {},
-                                                'app_push': False,
-                                                'email': False}],
-                                        sender=MessagePreferences,
-                                        user=self.user_1)
+        handler.assert_called_once_with(
+            signal=signals.message_preferences_changed,
+            delta=[
+                {
+                    "id": "default",
+                    "label": "Updates",
+                    "description": "General news and updates.",
+                    "data": {},
+                    "app_push": False,
+                    "email": False,
+                }
+            ],
+            sender=MessagePreferences,
+            user=self.user_1,
+        )
 
     def test_change_zero_message_preference_does_not_fire_signal(self):
 
@@ -880,8 +1013,10 @@ class EndpointTests(InboxTestCaseMixin, TransactionTestCase):
         # Update default message preference
         res = self._get_message_preferences(self.user_1.pk)
         self.validate(res.data, message_preferences)
-        res.data['results'][0]['app_push'] = True
-        response = self.client.put(f'/api/v1/users/{self.user_1.pk}/message_preferences', res.data)
+        res.data["results"][0]["app_push"] = True
+        response = self.client.put(
+            f"/api/v1/users/{self.user_1.pk}/message_preferences", res.data
+        )
         self.assertHTTP200(response)
 
         # Assert the signal was called only once with the args

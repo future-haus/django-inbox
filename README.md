@@ -48,7 +48,9 @@ INBOX_CONFIG = {
     'BACKENDS': {
         'APP_PUSH': 'inbox.core.app_push.backends.firebase.AppPushBackend',
         'APP_PUSH_CONFIG': {  # Config specific to the app push backend being used
-            'GOOGLE_FCM_SERVER_KEY': 'abc'
+            'CREDENTIALS': None,
+            'SERVICE_ACCOUNT_FILE': None
+            'PROJECT_ID': 12345
         }
     },
     'CHECK_IS_EMAIL_VERIFIED': True,  # Calls a method on the User being sent to verify the email is verified before sending.
@@ -266,25 +268,53 @@ Fires when any message preference group medium changes. Receives the following p
 the mediums that changed with their new/current value
 
     
+Contributing
+=============
 
-Test
-====
+Docker compose is used for the testing setup, and should be initialized the first time with:
 
-Setup Postgres database to run tests.
+```shell
+docker compose build
+```
 
-    CREATE ROLE inbox WITH LOGIN PASSWORD 'password';
-    ALTER USER inbox WITH superuser;
-    CREATE DATABASE inbox;
-    ALTER ROLE inbox SET client_encoding TO 'utf8';
-    ALTER ROLE inbox SET default_transaction_isolation TO 'read committed';
-    ALTER ROLE inbox SET timezone TO 'UTC';
-    ALTER USER inbox CREATEDB;
-    GRANT ALL PRIVILEGES ON DATABASE inbox TO inbox;
+You will also need to provide a service account JSON file at the path `service-account.json`
+
+Test setup
+------------
+
+To set up the database for the first test run:
+
+```shell
+make init-db
+```
+
+Run tests
+----------
+
+```shell
+make test
+```
 
 Build and Upload
-================
+------------------
 
-Make sure you have twine in your system Python. Bump the version number in setup.py, major, minor, patch (semver). Commit
+Configure the PyPi location in your `~/.pypirc` file.
+
+```shell
+[pypigcp]
+repository: https://us-central1-python.pkg.dev/made-with-future/pypi/
+```
+
+Make sure you have `twine` and `build` in your system Python. 
+
+```shell
+python3 -m pip install build twine
+```
+
+Bump the version number in setup.py, major, minor, patch (semver). Commit
 to repo and then run:
 
-`python setup.py sdist bdist_wheel upload`
+```shell
+python3 -m build
+twine upload -r pypigcp dist/django_inbox-.0*
+```

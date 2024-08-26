@@ -1,3 +1,4 @@
+import logging
 from django.contrib.auth import get_user_model
 from django.core import mail
 from django.utils import timezone
@@ -18,20 +19,27 @@ class CronTestCase(InboxTestCaseMixin, TransactionTestCase):
 
     def setUp(self):
         super().setUp()
-        self.user = User.objects.create(email=fake.ascii_email, email_verified_on=timezone.now().date())
-        self.user.device_group.notification_key = 'fake-notification-key'
+        self.user = User.objects.create(
+            email=fake.ascii_email, email_verified_on=timezone.now().date()
+        )
+        self.user.device_group.notification_key = "fake-notification-key"
         self.user.device_group.save()
+
+        logger = logging.getLogger("django.request")
+        logger.setLevel(logging.ERROR)
 
     def test_cron_process_new_messages(self):
 
         self.assertEqual(MessageLog.objects.count(), 0)
 
-        message = Message.objects.create(user=self.user, key='default', fail_silently=False)
+        message = Message.objects.create(
+            user=self.user, key="default", fail_silently=False
+        )
 
-        response = self.get('/cron/process_new_messages')
+        response = self.get("/cron/process_new_messages")
         self.assertHTTP200(response)
 
-        response = self.get('/cron/process_new_message_logs')
+        response = self.get("/cron/process_new_message_logs")
         self.assertHTTP200(response)
 
         self.assertEqual(len(app_push.outbox), 2)

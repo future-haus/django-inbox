@@ -26,11 +26,12 @@ class DeviceSerializer(ModelSerializer):
             'registration_ids': [validated_data['registration_token']]
         }
 
+        from inbox.core.app_push.backends.firebase import AppPushBackend
+        backend = AppPushBackend()
         headers = {
-            'Authorization': 'key={}'.format(settings.GOOGLE_FCM_SERVER_KEY),
             'project_id': settings.GOOGLE_FCM_SENDER_ID,
-            'Content-Type': 'application/json'
         }
+        headers.update(backend.fcm.request_headers())
 
         # DeviceGroup will only have notification_key if previously saved to Google, make this an add operation
         if device_group.notification_key:
