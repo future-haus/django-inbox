@@ -11,15 +11,15 @@ from shutil import rmtree
 
 from setuptools import Command, find_packages, setup
 
-NAME = 'django-inbox'
-DESCRIPTION = 'A Django app to support user inbox messages.'
-URL = 'https://www.madewithfuture.com/'
-AUTHOR = 'Josh Turmel <jt@madewithfuture.com>, Kevin Morey <kevin@madewithfuture.com>'
+NAME = "django-inbox"
+DESCRIPTION = "A Django app to support user inbox messages."
+URL = "https://www.madewithfuture.com/"
+AUTHOR = "Josh Turmel <jt@madewithfuture.com>, Kevin Morey <kevin@madewithfuture.com>"
 REQUIRES_PYTHON = ">=3.7"
 VERSION = "0.9.0"
 
 REQUIRED = [
-    "django>=2.2,<=5.0.8",
+    "django>=4.0,<=5.0.8",
     "django-annoying",
     "django_enumfield>=2.0.0",
     "djangorestframework",
