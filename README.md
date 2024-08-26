@@ -298,7 +298,23 @@ make test
 Build and Upload
 ------------------
 
-Make sure you have twine in your system Python. Bump the version number in setup.py, major, minor, patch (semver). Commit
+Configure the PyPi location in your `~/.pypirc` file.
+
+```shell
+[pypigcp]
+repository: https://us-central1-python.pkg.dev/made-with-future/pypi/
+```
+
+Make sure you have `twine` and `build` in your system Python. 
+
+```shell
+python3 -m pip install build twine
+```
+
+Bump the version number in setup.py, major, minor, patch (semver). Commit
 to repo and then run:
 
-`python setup.py sdist bdist_wheel upload`
+```shell
+python3 -m build
+twine upload -r pypigcp dist/django_inbox-.0*
+```
