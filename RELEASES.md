@@ -1,5 +1,19 @@
 # Releases
 
+#### 0.9.0 (2024-08-06)
+
+Improvement
+
+- Update to latest PyFCM (Migration to FCM HTTP V1)
+- Support Django 5.0.8
+
+#### 0.8.11 (2022-08-05)
+
+Improvement
+
+- Test on Django 4.1
+- Fix warning message
+
 #### 0.8.10 (2022-06-10)
 
 Improvement

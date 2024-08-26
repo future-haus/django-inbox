@@ -1,4 +1,4 @@
-import json
+import logging
 import platform
 
 from rest_framework import status
@@ -7,8 +7,8 @@ from rest_framework.test import APITestCase, APITransactionTestCase
 from jsonschema import Draft4Validator
 
 _is_cpython = (
-        hasattr(platform, 'python_implementation') and
-        platform.python_implementation().lower() == "cpython"
+    hasattr(platform, "python_implementation")
+    and platform.python_implementation().lower() == "cpython"
 )
 
 
@@ -46,7 +46,12 @@ class ClientHelperMixin(object):
         if not v.is_valid(data):
             for error in sorted(v.iter_errors(data), key=str):
                 if error.context:
-                    self.fail("\n".join('{} {}'.format(cerror.absolute_path, cerror.message) for cerror in error.context))
+                    self.fail(
+                        "\n".join(
+                            "{} {}".format(cerror.absolute_path, cerror.message)
+                            for cerror in error.context
+                        )
+                    )
                 else:
                     self.fail(error.message)
 
@@ -55,10 +60,10 @@ class ClientHelperMixin(object):
 
     def validate_list(self, response, schema, pages=True):
         if pages:
-            self.validate(response.data['results'][0], schema['items']['oneOf'][0])
-            self.validate(response.data['results'], schema)
+            self.validate(response.data["results"][0], schema["items"]["oneOf"][0])
+            self.validate(response.data["results"], schema)
         else:
-            self.validate(response.data[0], schema['items']['oneOf'][0])
+            self.validate(response.data[0], schema["items"]["oneOf"][0])
             self.validate(response.data, schema)
 
     def get(self, path, data=None, follow=False, secure=False, **extra):
@@ -82,8 +87,16 @@ class ClientHelperMixin(object):
 
 
 class TestCase(HTTPStatusTestCaseMixin, ClientHelperMixin, APITestCase):
-    pass
+    def setUp(self):
+        super().setUp()
+        logger = logging.getLogger("django.request")
+        logger.setLevel(logging.ERROR)
 
 
-class TransactionTestCase(HTTPStatusTestCaseMixin, ClientHelperMixin, APITransactionTestCase):
-    pass
+class TransactionTestCase(
+    HTTPStatusTestCaseMixin, ClientHelperMixin, APITransactionTestCase
+):
+    def setUp(self):
+        super().setUp()
+        logger = logging.getLogger("django.request")
+        logger.setLevel(logging.ERROR)

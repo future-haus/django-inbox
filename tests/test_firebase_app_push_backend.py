@@ -1,3 +1,4 @@
+import logging
 import os
 from unittest import skip
 
@@ -26,39 +27,76 @@ class FirebaseAppPushBackendTestCase(InboxTestCaseMixin, TransactionTestCase):
 
     def setUp(self):
         super().setUp()
-        self.user = User.objects.create(email=fake.ascii_email, email_verified_on=timezone.now().date())
-        self.fake_notification_key = 'fake-notification-key'
+        self.user = User.objects.create(
+            email=fake.ascii_email, email_verified_on=timezone.now().date()
+        )
+        self.fake_notification_key = "fake-notification-key"
         self.user.device_group.notification_key = self.fake_notification_key
         self.user.device_group.save()
+
+        logger = logging.getLogger("inbox.core.app_push.backends.firebase")
+        logger.setLevel(logging.ERROR)
 
     @responses.activate
     @skip
     def test_send_messages(self):
-        os.environ['GOOGLE_CLOUD_PROJECT'] = 'future-haus'
+        os.environ["GOOGLE_CLOUD_PROJECT"] = "future-haus"
 
-        message = Message.objects.create(user=self.user, key='default')
+        message = Message.objects.create(user=self.user, key="default")
         process_new_messages()
         message_log = message.logs.all()[0]
 
-        connection = app_push.get_connection('inbox.core.app_push.backends.firebase.AppPushBackend', dry_run=True)
+        connection = app_push.get_connection(
+            "inbox.core.app_push.backends.firebase.AppPushBackend", dry_run=True
+        )
 
-        responses.add(responses.POST, 'https://fcm.googleapis.com/fcm/send',
-                      json={"multicast_ids": [], "success": 1, "failure": 0, "canonical_ids": 0, "results": [],
-                            "topic_message_id": None})
+        responses.add(
+            responses.POST,
+            "https://fcm.googleapis.com/v1/projects/future-haus/messages:send",
+            json={
+                "multicast_ids": [],
+                "success": 1,
+                "failure": 0,
+                "canonical_ids": 0,
+                "results": [],
+                "topic_message_id": None,
+            },
+        )
 
-        AppPushMessage(self.user, 'Test Subject', 'Test Body', data={}, connection=connection,
-                       message_log=message_log).send()
+        AppPushMessage(
+            self.user,
+            "Test Subject",
+            "Test Body",
+            data={},
+            connection=connection,
+            message_log=message_log,
+        ).send()
 
-        responses.add(responses.POST, 'https://fcm.googleapis.com/fcm/send',
-                      json={"multicast_ids": [], "success": 0, "failure": 1, "canonical_ids": 0, "results": [],
-                            "topic_message_id": None})
+        responses.add(
+            responses.POST,
+            "https://fcm.googleapis.com/v1/projects/future-haus/messages:send",
+            json={
+                "multicast_ids": [],
+                "success": 0,
+                "failure": 1,
+                "canonical_ids": 0,
+                "results": [],
+                "topic_message_id": None,
+            },
+        )
 
-        message = Message.objects.create(user=self.user, key='default')
+        message = Message.objects.create(user=self.user, key="default")
         process_new_messages()
         message_log = message.logs.all()[0]
 
-        AppPushMessage(self.user, 'Test Subject', 'Test Body', data={}, connection=connection,
-                       message_log=message_log).send()
+        AppPushMessage(
+            self.user,
+            "Test Subject",
+            "Test Body",
+            data={},
+            connection=connection,
+            message_log=message_log,
+        ).send()
 
         # notification key should be null now
         self.user.device_group.refresh_from_db()
@@ -66,51 +104,103 @@ class FirebaseAppPushBackendTestCase(InboxTestCaseMixin, TransactionTestCase):
         message_log.refresh_from_db()
         self.assertEqual(message_log.status, MessageLogStatus.FAILED)
 
-        responses.replace(responses.POST, 'https://fcm.googleapis.com/v1/projects/future-haus/messages:send',
-                          json={'error': {'details': [
-                              {'@type': 'type.googleapis.com/google.firebase.fcm.v1.FcmError',
-                               'errorCode': 'THIRD_PARTY_AUTH_ERROR'}
-                          ]}}, status=401)
+        responses.replace(
+            responses.POST,
+            "https://fcm.googleapis.com/v1/projects/future-haus/messages:send",
+            json={
+                "error": {
+                    "details": [
+                        {
+                            "@type": "type.googleapis.com/google.firebase.fcm.v1.FcmError",
+                            "errorCode": "THIRD_PARTY_AUTH_ERROR",
+                        }
+                    ]
+                }
+            },
+            status=401,
+        )
 
-        AppPushMessage(self.user, 'Test Subject', 'Test Body', data={}, connection=connection).send()
+        AppPushMessage(
+            self.user, "Test Subject", "Test Body", data={}, connection=connection
+        ).send()
 
-        responses.replace(responses.POST, 'https://fcm.googleapis.com/v1/projects/future-haus/messages:send',
-                          json={'error': {'details': [
-                              {'@type': 'type.googleapis.com/google.firebase.fcm.v1.FcmError',
-                               'errorCode': 'SENDER_ID_MISMATCH'}
-                          ]}}, status=403)
+        responses.replace(
+            responses.POST,
+            "https://fcm.googleapis.com/v1/projects/future-haus/messages:send",
+            json={
+                "error": {
+                    "details": [
+                        {
+                            "@type": "type.googleapis.com/google.firebase.fcm.v1.FcmError",
+                            "errorCode": "SENDER_ID_MISMATCH",
+                        }
+                    ]
+                }
+            },
+            status=403,
+        )
 
-        AppPushMessage(self.user, 'Test Subject', 'Test Body', data={}, connection=connection).send()
+        AppPushMessage(
+            self.user, "Test Subject", "Test Body", data={}, connection=connection
+        ).send()
 
-        responses.replace(responses.POST, 'https://fcm.googleapis.com/v1/projects/future-haus/messages:send',
-                          json={'error': {'details': [
-                              {'@type': 'type.googleapis.com/google.firebase.fcm.v1.FcmError',
-                               'errorCode': 'QUOTA_EXCEEDED'}
-                          ]}}, status=429)
+        responses.replace(
+            responses.POST,
+            "https://fcm.googleapis.com/v1/projects/future-haus/messages:send",
+            json={
+                "error": {
+                    "details": [
+                        {
+                            "@type": "type.googleapis.com/google.firebase.fcm.v1.FcmError",
+                            "errorCode": "QUOTA_EXCEEDED",
+                        }
+                    ]
+                }
+            },
+            status=429,
+        )
 
-        AppPushMessage(self.user, 'Test Subject', 'Test Body', data={}, connection=connection).send()
+        AppPushMessage(
+            self.user, "Test Subject", "Test Body", data={}, connection=connection
+        ).send()
 
     @responses.activate
     def test_send_message_with_nested_data(self):
-        os.environ['GOOGLE_CLOUD_PROJECT'] = 'future-haus'
+        os.environ["GOOGLE_CLOUD_PROJECT"] = "future-haus"
 
-        message = Message.objects.create(user=self.user, key='default', data={'foo': 'bar', 'foo2': {}})
+        message = Message.objects.create(
+            user=self.user, key="default", data={"foo": "bar", "foo2": {}}
+        )
         process_new_messages()
         message_log = message.logs.all()[0]
 
         inbox_settings.get_config.cache_clear()
         INBOX_CONFIG = settings.INBOX_CONFIG.copy()
-        INBOX_CONFIG['BACKENDS']['APP_PUSH_CONFIG'] = {
-            'GOOGLE_FCM_SERVER_KEY': 'abc'
+        INBOX_CONFIG["BACKENDS"]["APP_PUSH_CONFIG"] = {
+            "CREDENTIALS": None,
+            "SERVICE_ACCOUNT_FILE": "service-account.json",
+            "PROJECT_ID": 12345,
         }
         with self.settings(INBOX_CONFIG=INBOX_CONFIG):
-            connection = app_push.get_connection('inbox.core.app_push.backends.firebase.AppPushBackend', dry_run=True)
+            connection = app_push.get_connection(
+                "inbox.core.app_push.backends.firebase.AppPushBackend",
+                dry_run=True,
+            )
 
-            responses.add(responses.POST, 'https://fcm.googleapis.com/fcm/send',
-                          json={'success': 1})
+            responses.add(
+                responses.POST,
+                "https://fcm.googleapis.com/v1/projects/future-haus/messages:send",
+                json={"success": 1},
+            )
 
-            AppPushMessage(self.user, 'Test Subject', 'Test Body', data={'foo': 'bar', 'foo2': {}},
-                           connection=connection, message_log=message_log).send()
+            AppPushMessage(
+                self.user,
+                "Test Subject",
+                "Test Body",
+                data={"foo": "bar", "foo2": {}},
+                connection=connection,
+                message_log=message_log,
+            ).send()
 
     @responses.activate
     def test_save_message_process_for_push(self):
@@ -119,15 +209,25 @@ class FirebaseAppPushBackendTestCase(InboxTestCaseMixin, TransactionTestCase):
         inbox_settings.get_config.cache_clear()
         # Then override the INBOX_CONFIG setting, we'll add a new message group and see it we get the expected return
         INBOX_CONFIG = settings.INBOX_CONFIG.copy()
-        INBOX_CONFIG['BACKENDS']['APP_PUSH'] = 'inbox.core.app_push.backends.firebase.AppPushBackend'
+        INBOX_CONFIG["BACKENDS"][
+            "APP_PUSH"
+        ] = "inbox.core.app_push.backends.firebase.AppPushBackend"
         with self.settings(INBOX_CONFIG=INBOX_CONFIG):
-            Message.objects.create(user=self.user, key='default')
+            Message.objects.create(user=self.user, key="default")
 
-            responses.add(responses.POST, 'https://fcm.googleapis.com/fcm/send',
-                          json={"multicast_ids": [], "success": 1, "failure": 0, "canonical_ids": 0, "results": [],
-                                "topic_message_id": None})
+            responses.add(
+                responses.POST,
+                "https://fcm.googleapis.com/v1/projects/future-haus/messages:send",
+                json={
+                    "multicast_ids": [],
+                    "success": 1,
+                    "failure": 0,
+                    "canonical_ids": 0,
+                    "results": [],
+                    "topic_message_id": None,
+                },
+            )
 
             process_new_messages()
 
         inbox_settings.get_config.cache_clear()
-

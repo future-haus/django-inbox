@@ -21,8 +21,15 @@ class AppPushBackend(BaseAppPushBackend):
 
         self.dry_run = dry_run
 
+        settings = inbox_settings.get_config()["BACKENDS"]["APP_PUSH_CONFIG"]
+        service_account_file = settings.get("SERVICE_ACCOUNT_FILE")
+        credentials = settings.get("CREDENTIALS")
+        project_id = settings.get("PROJECT_ID")
+
         self.fcm = FCMNotification(
-            api_key=inbox_settings.get_config()['BACKENDS']['APP_PUSH_CONFIG']['GOOGLE_FCM_SERVER_KEY']
+            service_account_file=service_account_file,
+            credentials=credentials,
+            project_id=project_id,
         )
 
     def send_messages(self, messages: List[AppPushMessage]):
@@ -37,38 +44,42 @@ class AppPushBackend(BaseAppPushBackend):
 
             try:
                 content_available = message.title is None and message.body is None
-                response = self.fcm.notify_single_device(registration_id=message.entity.notification_key,
-                                                         message_title=message.title,
-                                                         message_body=message.body,
-                                                         data_message=data,
-                                                         content_available=content_available)
+                response = self.fcm.notify_single_device(
+                    registration_id=message.entity.notification_key,
+                    message_title=message.title,
+                    message_body=message.body,
+                    data_message=data,
+                    content_available=content_available,
+                )
             except Exception as msg:
                 if message.message_log:
                     message.message_log.status = MessageLogStatus.FAILED
                     message.message_log.failure_reason = str(msg)
                     message.message_log.save()
                 logger.warning(msg)
-                logger.warning('Exception when calling notify_single_device for {}'.format(
-                    message.entity.notification_key
-                ))
+                logger.warning(
+                    "Exception when calling notify_single_device for {}".format(
+                        message.entity.notification_key
+                    )
+                )
             else:
                 logger.info(json.dumps(response))
 
-                if response['failure'] > 0:
-                    if 'failed_registration_ids' in response:
+                if response["failure"] > 0:
+                    if "failed_registration_ids" in response:
                         failed_registration_ids = []
-                        for registration_id in response['failed_registration_ids']:
+                        for registration_id in response["failed_registration_ids"]:
                             failed_registration_ids.append(registration_id)
 
-                        msg = ', '.join(failed_registration_ids)
-                        logger.warning('Failed registration IDs: {}'.format(msg))
+                        msg = ", ".join(failed_registration_ids)
+                        logger.warning("Failed registration IDs: {}".format(msg))
                     else:
                         errors = []
-                        for result in response['results']:
-                            errors.append(result['error'])
+                        for result in response["results"]:
+                            errors.append(result["error"])
 
                         msg = "\n".join(errors)
-                        logger.warning('FCM failure: {}'.format(msg))
+                        logger.warning("FCM failure: {}".format(msg))
                 else:
-                    logger.info('FCM success')
+                    logger.info("FCM success")
                     logger.info(json.dumps(response))
