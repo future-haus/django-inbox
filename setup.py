@@ -16,7 +16,7 @@ DESCRIPTION = "A Django app to support user inbox messages."
 URL = "https://www.madewithfuture.com/"
 AUTHOR = "Josh Turmel <jt@madewithfuture.com>, Kevin Morey <kevin@madewithfuture.com>"
 REQUIRES_PYTHON = ">=3.7"
-VERSION = "0.9.0"
+VERSION = "0.9.3"
 
 REQUIRED = [
     "django>=4.0,<=5.0.8",
@@ -29,7 +29,7 @@ REQUIRED = [
     "psycopg2-binary",
 ]
 
-EXTRAS = {"app_push_firebase": ["pyfcm<=2.0.0"], "admin_commands": ["beautifultable"]}
+EXTRAS = {"app_push_firebase": ["pyfcm>=2.0.6"], "admin_commands": ["beautifultable"]}
 
 TESTS_REQUIRE = [
     "coverage",
@@ -41,7 +41,7 @@ TESTS_REQUIRE = [
     "freezegun",
     "twine",
     "beautifultable",
-    "pyfcm==2.0.5",
+    "pyfcm==2.0.6",
 ]
 
 # The rest you shouldn't have to touch too much :)

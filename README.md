@@ -49,7 +49,7 @@ INBOX_CONFIG = {
         'APP_PUSH': 'inbox.core.app_push.backends.firebase.AppPushBackend',
         'APP_PUSH_CONFIG': {  # Config specific to the app push backend being used
             'CREDENTIALS': None,
-            'SERVICE_ACCOUNT_FILE': None
+            'SERVICE_ACCOUNT_FILE': None,
             'PROJECT_ID': 12345
         }
     },
@@ -66,6 +66,19 @@ INBOX_CONFIG = {
     'PER_USER_MESSAGES_MAX_COUNT': None,  # integer, Maximum count used, when messages exceed this they are available for maintenance cleanup
     'PER_USER_MESSAGES_MIN_AGE': None,  # timedelta, Used to bound max count, if desired, only has an effect if max count is set
     'MAX_AGE_BEYOND_SEND_AT': None,  # timedelta, Used to control the furthest out you can get from a send_at before the Message won't be sent at all, safe-guard
+}
+```
+
+If running in a Google Cloud environment where Application Default Credentials is available, you can configure like this:
+
+```python
+credentials, project_id = google.auth.default(
+    scopes=["https://www.googleapis.com/auth/firebase.messaging"]
+)
+INBOX_CONFIG["BACKENDS"]["APP_PUSH_CONFIG"] = {
+    "CREDENTIALS": credentials,
+    "SERVICE_ACCOUNT_FILE": None,
+    "PROJECT_ID": project_id,
 }
 ```
 
@@ -316,5 +329,5 @@ to repo and then run:
 
 ```shell
 python3 -m build
-twine upload -r pypigcp dist/django_inbox-.0*
+twine upload -r pypigcp dist/django_inbox-0.9.3*
 ```
