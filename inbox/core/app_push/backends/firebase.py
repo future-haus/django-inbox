@@ -44,12 +44,23 @@ class AppPushBackend(BaseAppPushBackend):
 
             try:
                 content_available = message.title is None and message.body is None
-                response = self.fcm.notify_single_device(
-                    registration_id=message.entity.notification_key,
-                    message_title=message.title,
-                    message_body=message.body,
-                    data_message=data,
-                    content_available=content_available,
+                apns_config = (
+                    {
+                        "payload": {
+                            "aps": {
+                                "content-available": 1,
+                            }
+                        }
+                    }
+                    if content_available
+                    else None
+                )
+                response = self.fcm.notify(
+                    fcm_token=message.entity.notification_key,
+                    notification_title=message.title,
+                    notification_body=message.body,
+                    data_payload=data,
+                    apns_config=apns_config,
                 )
             except Exception as msg:
                 if message.message_log:
@@ -58,28 +69,9 @@ class AppPushBackend(BaseAppPushBackend):
                     message.message_log.save()
                 logger.warning(msg)
                 logger.warning(
-                    "Exception when calling notify_single_device for {}".format(
+                    "Exception when calling notify for {}".format(
                         message.entity.notification_key
                     )
                 )
             else:
-                logger.info(json.dumps(response))
-
-                if response["failure"] > 0:
-                    if "failed_registration_ids" in response:
-                        failed_registration_ids = []
-                        for registration_id in response["failed_registration_ids"]:
-                            failed_registration_ids.append(registration_id)
-
-                        msg = ", ".join(failed_registration_ids)
-                        logger.warning("Failed registration IDs: {}".format(msg))
-                    else:
-                        errors = []
-                        for result in response["results"]:
-                            errors.append(result["error"])
-
-                        msg = "\n".join(errors)
-                        logger.warning("FCM failure: {}".format(msg))
-                else:
-                    logger.info("FCM success")
-                    logger.info(json.dumps(response))
+                logger.info("FCM success: %s", json.dumps(response))
